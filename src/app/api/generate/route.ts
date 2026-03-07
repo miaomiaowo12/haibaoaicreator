@@ -130,10 +130,18 @@ export async function POST(request: NextRequest) {
           const base64Data = matches[2];
           imageUrl = `data:image/${format};base64,${base64Data}`;
           console.log('背景图格式:', format, 'Base64长度:', base64Data.length);
+          
+          // 如果图片太大（超过1MB base64），则不发送图片，只在提示词中说明
+          if (base64Data.length > 1365000) {
+            console.log('背景图太大，不发送图片');
+            requestBody.image = undefined;
+          } else {
+            requestBody.image = imageUrl;
+          }
         }
+      } else {
+        requestBody.image = imageUrl;
       }
-      
-      requestBody.image = imageUrl;
     }
 
     console.log('请求参数:', JSON.stringify({

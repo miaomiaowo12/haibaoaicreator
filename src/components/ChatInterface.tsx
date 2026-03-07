@@ -62,17 +62,18 @@ export default function ChatInterface() {
   useEffect(() => {
     setMounted(true);
     const savedConversations = getConversations();
-    const newConv = createConversation();
     
     if (savedConversations.length === 0) {
+      const newConv = createConversation();
       setConversations([newConv]);
+      setCurrentConversationId(newConv.id);
+      setMessages(newConv.messages);
     } else {
-      setConversations([newConv, ...savedConversations]);
+      setConversations(savedConversations);
+      const latestConv = savedConversations.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+      setCurrentConversationId(latestConv.id);
+      setMessages(latestConv.messages);
     }
-    
-    setCurrentConversationId(newConv.id);
-    setMessages(newConv.messages);
-    saveConversations([newConv, ...savedConversations]);
   }, []);
 
   const scrollToBottom = () => {
@@ -94,8 +95,43 @@ export default function ChatInterface() {
     setBackgroundImage(null);
   };
 
-  const handleImageUpload = (dataUrl: string) => {
-    setBackgroundImage(dataUrl);
+  const handleImageUpload = async (dataUrl: string) => {
+    try {
+      const compressedDataUrl = await compressImage(dataUrl, 1024, 0.8);
+      setBackgroundImage(compressedDataUrl);
+    } catch (err) {
+      console.error('图片压缩失败:', err);
+      setBackgroundImage(dataUrl);
+    }
+  };
+
+  const compressImage = (dataUrl: string, maxWidth: number = 1024, quality: number = 0.8): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        } else {
+          resolve(dataUrl);
+        }
+      };
+      img.src = dataUrl;
+    });
   };
 
   const handleCopyMessage = async (messageId: string, content: string) => {
@@ -108,15 +144,21 @@ export default function ChatInterface() {
     }
   };
 
-  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        setBackgroundImage(dataUrl);
+        try {
+          const compressedDataUrl = await compressImage(dataUrl, 1024, 0.8);
+          setBackgroundImage(compressedDataUrl);
+        } catch (err) {
+          console.error('图片压缩失败:', err);
+          setBackgroundImage(dataUrl);
+        }
       }
     };
     reader.readAsDataURL(file);
