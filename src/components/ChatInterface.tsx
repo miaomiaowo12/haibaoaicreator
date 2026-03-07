@@ -234,7 +234,7 @@ export default function ChatInterface() {
             role: m.role,
             content: m.content,
           })),
-          mode: 'thumbnails',
+          mode: backgroundImage ? 'single' : 'thumbnails',
         }),
       });
 
@@ -244,18 +244,30 @@ export default function ChatInterface() {
         throw new Error(data.error);
       }
 
-      const thumbnails = data.data?.map((img: { url: string }) => img.url) || [];
-      
-      const assistantMessage: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: '已生成多个方案，请选择一个：',
-        thumbnails: thumbnails,
-      };
+      if (backgroundImage) {
+        const assistantMessage: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: '海报已生成！点击图片可放大查看',
+          generatedImage: data.data?.[0]?.url || data.url,
+        };
+        const finalMessages = [...newMessages, assistantMessage];
+        setMessages(finalMessages);
+        saveMessages(finalMessages);
+      } else {
+        const thumbnails = data.data?.map((img: { url: string }) => img.url) || [];
+        
+        const assistantMessage: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: '已生成多个方案，请选择一个：',
+          thumbnails: thumbnails,
+        };
 
-      const finalMessages = [...newMessages, assistantMessage];
-      setMessages(finalMessages);
-      saveMessages(finalMessages);
+        const finalMessages = [...newMessages, assistantMessage];
+        setMessages(finalMessages);
+        saveMessages(finalMessages);
+      }
     } catch (error) {
       const errorMessage: Message = {
         id: generateId(),

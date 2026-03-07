@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
       promptParts.push(typographySkill);
     }
 
-    const isThumbnailMode = mode === 'thumbnails';
-    const size = isThumbnailMode ? '1024x1024' : '2048x2048';
-    const resolutionText = isThumbnailMode ? '1024×1024' : '2048×2048';
+    const isThumbnailMode = mode === 'thumbnails' && !backgroundImage && !selectedImage;
+    const size = isThumbnailMode ? '2048x2048' : '2048x2048';
+    const resolutionText = '2048×2048';
     
     promptParts.push(`高清 ${resolutionText} 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁`);
 
