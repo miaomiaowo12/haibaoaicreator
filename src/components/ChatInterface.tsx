@@ -82,7 +82,6 @@ export default function ChatInterface() {
         setConversations(updatedConversations);
         setCurrentConversationId(newConv.id);
         setMessages(newConv.messages);
-        saveConversations(updatedConversations);
       }
     }
   }, []);
@@ -252,7 +251,6 @@ export default function ChatInterface() {
     setConversations(updatedConversations);
     setCurrentConversationId(newConv.id);
     setMessages(newConv.messages);
-    saveConversations(updatedConversations);
     setShowConversationList(false);
   };
 
