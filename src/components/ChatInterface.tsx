@@ -66,12 +66,21 @@ export default function ChatInterface() {
     const savedConversations = getConversations();
     const nonEmptyConversations = savedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID && c.messages.length > 0);
     
-    const emptyConv = createEmptyConversation();
-    const updatedConversations = [emptyConv, ...nonEmptyConversations];
-    
-    setConversations(updatedConversations);
-    setCurrentConversationId(emptyConv.id);
-    setMessages(emptyConv.messages);
+    // 检查是否需要创建空对话
+    // 只有在没有保存的会话时才创建空对话
+    if (nonEmptyConversations.length === 0) {
+      const emptyConv = createEmptyConversation();
+      setConversations([emptyConv]);
+      setCurrentConversationId(emptyConv.id);
+      setMessages(emptyConv.messages);
+    } else {
+      // 如果有保存的会话，加载最新的会话，不创建空对话
+      const sortedConversations = [...nonEmptyConversations].sort((a, b) => b.updatedAt - a.updatedAt);
+      const latestConv = sortedConversations[0];
+      setConversations(sortedConversations);
+      setCurrentConversationId(latestConv.id);
+      setMessages(latestConv.messages);
+    }
   }, []);
 
   const scrollToBottom = () => {
@@ -98,16 +107,17 @@ export default function ChatInterface() {
           id: `conv-${Date.now()}`,
         };
         
-        // 替换空会话
-        const nonEmptyConversations = updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
-        updatedConversations = [realConv, ...nonEmptyConversations];
+        // 替换空会话，不创建新的空会话
+        const otherConversations = updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
+        updatedConversations = [realConv, ...otherConversations];
         
-        // 更新当前会话ID
+        // 更新当前会话ID，保持在当前会话
         setCurrentConversationId(realConv.id);
       }
     }
     
     setConversations(updatedConversations);
+    // 只保存有内容的会话（不包括空会话）
     saveConversations(updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID));
   };
 
