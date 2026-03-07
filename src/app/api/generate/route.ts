@@ -95,6 +95,10 @@ export async function POST(request: NextRequest) {
       response_format: 'url',
     };
 
+    if (isThumbnailMode) {
+      requestBody.sequential_image_generation = 'auto';
+    }
+
     if (selectedImage) {
       requestBody.image = selectedImage;
     } else if (backgroundImage) {
