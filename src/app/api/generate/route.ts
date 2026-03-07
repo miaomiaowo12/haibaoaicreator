@@ -61,6 +61,10 @@ export async function POST(request: NextRequest) {
 
     let enhancedPrompt = promptParts.join('；');
 
+    if (isThumbnailMode) {
+      enhancedPrompt = `请生成3张不同风格的海报方案。${enhancedPrompt}`;
+    }
+
     if (contextSummary) {
       enhancedPrompt = `用户之前的描述：${contextSummary}。当前需求：${enhancedPrompt}`;
     }
@@ -98,7 +102,6 @@ export async function POST(request: NextRequest) {
     };
 
     if (isThumbnailMode) {
-      enhancedPrompt = `请生成3张不同风格的海报方案。${enhancedPrompt}`;
       requestBody.sequential_image_generation = 'auto';
     }
 
