@@ -12,8 +12,10 @@ import {
   getConversations, 
   saveConversations, 
   createConversation,
+  createEmptyConversation,
   updateConversation,
-  deleteConversation
+  deleteConversation,
+  EMPTY_CONVERSATION_ID
 } from '@/lib/conversationStore';
 
 const POSTER_TYPES = [
@@ -62,20 +64,14 @@ export default function ChatInterface() {
   useEffect(() => {
     setMounted(true);
     const savedConversations = getConversations();
-    const nonEmptyConversations = savedConversations.filter(c => c.messages.length > 0);
+    const nonEmptyConversations = savedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID && c.messages.length > 0);
     
-    const newConv = createConversation();
+    const emptyConv = createEmptyConversation();
+    const updatedConversations = [emptyConv, ...nonEmptyConversations];
     
-    if (nonEmptyConversations.length === 0) {
-      setConversations([newConv]);
-      setCurrentConversationId(newConv.id);
-      setMessages(newConv.messages);
-    } else {
-      const updatedConversations = [newConv, ...nonEmptyConversations];
-      setConversations(updatedConversations);
-      setCurrentConversationId(newConv.id);
-      setMessages(newConv.messages);
-    }
+    setConversations(updatedConversations);
+    setCurrentConversationId(emptyConv.id);
+    setMessages(emptyConv.messages);
   }, []);
 
   const scrollToBottom = () => {
@@ -89,9 +85,23 @@ export default function ChatInterface() {
   const saveMessages = (newMessages: Message[]) => {
     if (!currentConversationId) return;
     if (newMessages.length === 0) return;
+    
     const updatedConversations = updateConversation(conversations, currentConversationId, newMessages);
-    setConversations(updatedConversations);
-    saveConversations(updatedConversations);
+    
+    // 如果当前是空会话，发送消息后需要创建新的空会话
+    if (currentConversationId === EMPTY_CONVERSATION_ID) {
+      const nonEmptyConversations = updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
+      const newEmptyConv = createEmptyConversation();
+      const finalConversations = [newEmptyConv, ...nonEmptyConversations];
+      
+      setConversations(finalConversations);
+      setCurrentConversationId(newEmptyConv.id);
+      setMessages(newEmptyConv.messages);
+      saveConversations(nonEmptyConversations);
+    } else {
+      setConversations(updatedConversations);
+      saveConversations(updatedConversations);
+    }
   };
 
   const handleRemoveBackground = () => {
@@ -239,21 +249,13 @@ export default function ChatInterface() {
   };
 
   const handleNewConversation = () => {
-    const currentConv = conversations.find(c => c.id === currentConversationId);
-    const nonEmptyConversations = conversations.filter(c => c.messages.length > 0);
+    const nonEmptyConversations = conversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
+    const emptyConv = createEmptyConversation();
+    const updatedConversations = [emptyConv, ...nonEmptyConversations];
     
-    if (currentConv && currentConv.messages.length === 0) {
-      const updatedConversations = [currentConv, ...nonEmptyConversations];
-      setConversations(updatedConversations);
-      setShowConversationList(false);
-      return;
-    }
-    
-    const newConv = createConversation();
-    const updatedConversations = [newConv, ...nonEmptyConversations];
     setConversations(updatedConversations);
-    setCurrentConversationId(newConv.id);
-    setMessages(newConv.messages);
+    setCurrentConversationId(emptyConv.id);
+    setMessages(emptyConv.messages);
     setShowConversationList(false);
   };
 
@@ -268,31 +270,19 @@ export default function ChatInterface() {
 
   const handleDeleteConversation = (id: string) => {
     const updatedConversations = deleteConversation(conversations, id);
-    const nonEmptyConversations = updatedConversations.filter(c => c.messages.length > 0);
+    const nonEmptyConversations = updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
     
     if (currentConversationId === id) {
-      if (nonEmptyConversations.length > 0) {
-        const newConv = createConversation();
-        const finalConversations = [newConv, ...nonEmptyConversations];
-        setConversations(finalConversations);
-        setCurrentConversationId(newConv.id);
-        setMessages(newConv.messages);
-        saveConversations(nonEmptyConversations);
-      } else {
-        const newConv = createConversation();
-        setConversations([newConv]);
-        setCurrentConversationId(newConv.id);
-        setMessages(newConv.messages);
-        saveConversations([]);
-      }
+      const emptyConv = createEmptyConversation();
+      const finalConversations = [emptyConv, ...nonEmptyConversations];
+      setConversations(finalConversations);
+      setCurrentConversationId(emptyConv.id);
+      setMessages(emptyConv.messages);
+      saveConversations(nonEmptyConversations);
     } else {
-      const currentConv = updatedConversations.find(c => c.id === currentConversationId);
-      if (currentConv && currentConv.messages.length === 0) {
-        const finalConversations = [currentConv, ...nonEmptyConversations];
-        setConversations(finalConversations);
-      } else {
-        setConversations(updatedConversations);
-      }
+      const emptyConv = createEmptyConversation();
+      const finalConversations = [emptyConv, ...nonEmptyConversations];
+      setConversations(finalConversations);
       saveConversations(nonEmptyConversations);
     }
   };

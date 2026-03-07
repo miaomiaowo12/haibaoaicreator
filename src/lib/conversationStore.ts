@@ -14,6 +14,7 @@ export interface Conversation {
 }
 
 const STORAGE_KEY = 'poster_ai_conversations';
+export const EMPTY_CONVERSATION_ID = 'empty-conversation-fixed-id';
 
 export function getConversations(): Conversation[] {
   if (typeof window === 'undefined') return [];
@@ -32,6 +33,22 @@ export function saveConversations(conversations: Conversation[]): void {
   } catch (error) {
     console.error('保存对话失败:', error);
   }
+}
+
+export function createEmptyConversation(): Conversation {
+  return {
+    id: EMPTY_CONVERSATION_ID,
+    title: '新对话',
+    messages: [
+      {
+        id: '1',
+        role: 'assistant',
+        content: '你好！我是AI海报生成助手 ✨\n\n你可以这样描述：\n• 春节祝福海报，阖家欢乐万事如意，中国风，发在朋友圈\n• 新店开业宣传，奶茶店，温馨风格，发在小红书\n• 或者直接告诉我你的想法，我来帮你实现~',
+      },
+    ],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
 }
 
 export function createConversation(): Conversation {

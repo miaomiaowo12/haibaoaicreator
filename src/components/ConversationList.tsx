@@ -1,6 +1,6 @@
 'use client';
 
-import { Conversation } from '@/lib/conversationStore';
+import { Conversation, EMPTY_CONVERSATION_ID } from '@/lib/conversationStore';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -19,8 +19,14 @@ export default function ConversationList({
   onNew,
   onClose,
 }: ConversationListProps) {
-  const nonEmptyConversations = conversations.filter(conv => conv.messages.length > 0);
-  const sortedConversations = [...nonEmptyConversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  const emptyConversation = conversations.find(c => c.id === EMPTY_CONVERSATION_ID);
+  const nonEmptyConversations = conversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
+  const sortedNonEmptyConversations = [...nonEmptyConversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  
+  // 空会话始终在最上面
+  const sortedConversations = emptyConversation 
+    ? [emptyConversation, ...sortedNonEmptyConversations]
+    : sortedNonEmptyConversations;
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -83,20 +89,22 @@ export default function ConversationList({
                     <p className="font-medium text-gray-900 truncate text-sm">{conv.title}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{formatDate(conv.updatedAt)}</p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm('确定要删除这个对话吗？')) {
-                        onDelete(conv.id);
-                      }
-                    }}
-                    className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                    title="删除对话"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  {conv.id !== EMPTY_CONVERSATION_ID && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('确定要删除这个对话吗？')) {
+                          onDelete(conv.id);
+                        }
+                      }}
+                      className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                      title="删除对话"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             ))
