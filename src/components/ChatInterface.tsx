@@ -240,13 +240,15 @@ export default function ChatInterface() {
 
   const handleNewConversation = () => {
     const currentConv = conversations.find(c => c.id === currentConversationId);
+    const nonEmptyConversations = conversations.filter(c => c.messages.length > 0);
     
     if (currentConv && currentConv.messages.length === 0) {
+      const updatedConversations = [currentConv, ...nonEmptyConversations];
+      setConversations(updatedConversations);
       setShowConversationList(false);
       return;
     }
     
-    const nonEmptyConversations = conversations.filter(c => c.messages.length > 0);
     const newConv = createConversation();
     const updatedConversations = [newConv, ...nonEmptyConversations];
     setConversations(updatedConversations);
