@@ -54,6 +54,7 @@ export default function ChatInterface() {
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [showConversationList, setShowConversationList] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -95,6 +96,16 @@ export default function ChatInterface() {
 
   const handleImageUpload = (dataUrl: string) => {
     setBackgroundImage(dataUrl);
+  };
+
+  const handleCopyMessage = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
   };
 
   const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -281,11 +292,26 @@ export default function ChatInterface() {
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-message ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-message relative group ${
                     message.role === 'user' ? 'message-user' : 'message-assistant'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</p>
+                  <button
+                    onClick={() => handleCopyMessage(message.id, message.content)}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-white/80 hover:bg-white shadow-sm"
+                    title="复制"
+                  >
+                    {copiedMessageId === message.id ? (
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed pr-8">{message.content}</p>
                   {message.generatedImage && (
                     <img
                       src={message.generatedImage}
