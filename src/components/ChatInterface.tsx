@@ -234,6 +234,7 @@ export default function ChatInterface() {
             role: m.role,
             content: m.content,
           })),
+          mode: 'thumbnails',
         }),
       });
 
@@ -243,11 +244,13 @@ export default function ChatInterface() {
         throw new Error(data.error);
       }
 
+      const thumbnails = data.data?.map((img: { url: string }) => img.url) || [];
+      
       const assistantMessage: Message = {
         id: generateId(),
         role: 'assistant',
-        content: '海报已生成！点击图片可放大查看',
-        generatedImage: data.data?.[0]?.url || data.url,
+        content: '已生成多个方案，请选择一个：',
+        thumbnails: thumbnails,
       };
 
       const finalMessages = [...newMessages, assistantMessage];
@@ -267,6 +270,66 @@ export default function ChatInterface() {
     }
   };
 
+  const handleSelectThumbnail = async (thumbnailUrl: string, messageIndex: number) => {
+    const message = messages[messageIndex];
+    if (!message || !message.thumbnails) return;
+
+    const loadingMessage: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: '正在生成高清大图，请稍候...',
+    };
+
+    const newMessages = [...messages, loadingMessage];
+    setMessages(newMessages);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: '生成高清版本',
+          posterType: selectedType,
+          colorScheme: selectedColorScheme,
+          typography: selectedTypography,
+          selectedImage: thumbnailUrl,
+          mode: 'hd',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const hdMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: '高清海报已生成！点击图片可放大查看',
+        generatedImage: data.data?.[0]?.url || data.url,
+      };
+
+      const finalMessages = [...newMessages.slice(0, -1), hdMessage];
+      setMessages(finalMessages);
+      saveMessages(finalMessages);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: `生成高清图失败：${error instanceof Error ? error.message : '未知错误'}`,
+      };
+      const finalMessages = [...newMessages.slice(0, -1), errorMessage];
+      setMessages(finalMessages);
+      saveMessages(finalMessages);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleNewConversation = () => {
     const nonEmptyConversations = conversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
     const emptyConv = createEmptyConversation();
@@ -275,6 +338,7 @@ export default function ChatInterface() {
     setConversations(updatedConversations);
     setCurrentConversationId(emptyConv.id);
     setMessages(emptyConv.messages);
+    setBackgroundImage(null);
     setShowConversationList(false);
   };
 
@@ -283,6 +347,7 @@ export default function ChatInterface() {
     if (conv) {
       setCurrentConversationId(id);
       setMessages(conv.messages);
+      setBackgroundImage(null);
       setShowConversationList(false);
     }
   };
@@ -398,6 +463,28 @@ export default function ChatInterface() {
                     )}
                   </button>
                   <p className="whitespace-pre-wrap text-[15px] leading-relaxed pr-8">{message.content}</p>
+                  {message.thumbnails && message.thumbnails.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {message.thumbnails.map((thumb, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleSelectThumbnail(thumb, messages.findIndex(m => m.id === message.id))}
+                          className="relative group rounded-lg overflow-hidden border-2 border-transparent hover:border-purple-500 transition-all"
+                        >
+                          <img
+                            src={thumb}
+                            alt={`方案 ${idx + 1}`}
+                            className="w-full aspect-square object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-purple-600 px-2 py-1 rounded">
+                              选择此方案
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {message.generatedImage && (
                     <img
                       src={message.generatedImage}

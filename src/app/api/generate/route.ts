@@ -14,7 +14,7 @@ interface ChatMessage {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, posterType, colorScheme, typography, messages, backgroundImage } = body;
+    const { prompt, posterType, colorScheme, typography, messages, backgroundImage, mode, selectedImage } = body;
 
     const apiKey = process.env.DOUBAO_API_KEY;
 
@@ -53,7 +53,11 @@ export async function POST(request: NextRequest) {
       promptParts.push(typographySkill);
     }
 
-    promptParts.push('高清 2048×2048 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁');
+    const isThumbnailMode = mode === 'thumbnails';
+    const size = isThumbnailMode ? '1024x1024' : '2048x2048';
+    const resolutionText = isThumbnailMode ? '1024×1024' : '2048×2048';
+    
+    promptParts.push(`高清 ${resolutionText} 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁`);
 
     let enhancedPrompt = promptParts.join('；');
 
@@ -83,16 +87,24 @@ export async function POST(request: NextRequest) {
 
     console.log('原始提示词:', prompt);
     console.log('增强后提示词:', enhancedPrompt);
+    console.log('模式:', mode || 'single');
     console.log('是否有背景图:', !!backgroundImage);
 
     const requestBody: Record<string, unknown> = {
       model: 'doubao-seedream-4-5-251128',
       prompt: enhancedPrompt,
-      size: '2048x2048',
+      size: size,
       response_format: 'url',
     };
 
-    if (backgroundImage) {
+    if (isThumbnailMode) {
+      requestBody.sequential_image_generation = 'auto';
+      requestBody.sequential_image_generation_options = { max_images: 3 };
+    }
+
+    if (selectedImage) {
+      requestBody.image = selectedImage;
+    } else if (backgroundImage) {
       let imageUrl = backgroundImage;
       
       if (backgroundImage.startsWith('data:image/')) {
@@ -103,7 +115,6 @@ export async function POST(request: NextRequest) {
           imageUrl = `data:image/${format};base64,${base64Data}`;
           console.log('背景图格式:', format, 'Base64长度:', base64Data.length);
           
-          // 如果图片太大（超过400KB base64 ≈ 544000字符），则不发送图片
           if (base64Data.length > 544000) {
             console.log('背景图太大，不发送图片，Base64长度:', base64Data.length);
             requestBody.image = undefined;
@@ -121,7 +132,9 @@ export async function POST(request: NextRequest) {
       model: requestBody.model,
       prompt: requestBody.prompt?.toString().substring(0, 100),
       hasImage: !!requestBody.image,
-      imageSize: requestBody.image ? (requestBody.image as string).length : 0
+      imageSize: requestBody.image ? (requestBody.image as string).length : 0,
+      size: requestBody.size,
+      sequential_image_generation: requestBody.sequential_image_generation
     }));
 
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
