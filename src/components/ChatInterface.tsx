@@ -69,10 +69,21 @@ export default function ChatInterface() {
       setCurrentConversationId(newConv.id);
       setMessages(newConv.messages);
     } else {
-      setConversations(savedConversations);
-      const latestConv = savedConversations.sort((a, b) => b.updatedAt - a.updatedAt)[0];
-      setCurrentConversationId(latestConv.id);
-      setMessages(latestConv.messages);
+      const sortedConversations = savedConversations.sort((a, b) => b.updatedAt - a.updatedAt);
+      const latestConv = sortedConversations[0];
+      
+      if (latestConv.messages.length === 0) {
+        setConversations(savedConversations);
+        setCurrentConversationId(latestConv.id);
+        setMessages(latestConv.messages);
+      } else {
+        const newConv = createConversation();
+        const updatedConversations = [newConv, ...savedConversations];
+        setConversations(updatedConversations);
+        setCurrentConversationId(newConv.id);
+        setMessages(newConv.messages);
+        saveConversations(updatedConversations);
+      }
     }
   }, []);
 
@@ -86,6 +97,7 @@ export default function ChatInterface() {
 
   const saveMessages = (newMessages: Message[]) => {
     if (!currentConversationId) return;
+    if (newMessages.length === 0) return;
     const updatedConversations = updateConversation(conversations, currentConversationId, newMessages);
     setConversations(updatedConversations);
     saveConversations(updatedConversations);
@@ -228,6 +240,13 @@ export default function ChatInterface() {
   };
 
   const handleNewConversation = () => {
+    const currentConv = conversations.find(c => c.id === currentConversationId);
+    
+    if (currentConv && currentConv.messages.length === 0) {
+      setShowConversationList(false);
+      return;
+    }
+    
     const newConv = createConversation();
     const updatedConversations = [newConv, ...conversations];
     setConversations(updatedConversations);
