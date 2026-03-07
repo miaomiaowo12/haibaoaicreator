@@ -241,8 +241,9 @@ export default function ChatInterface() {
       return;
     }
     
+    const nonEmptyConversations = conversations.filter(c => c.messages.length > 0);
     const newConv = createConversation();
-    const updatedConversations = [newConv, ...conversations];
+    const updatedConversations = [newConv, ...nonEmptyConversations];
     setConversations(updatedConversations);
     setCurrentConversationId(newConv.id);
     setMessages(newConv.messages);
@@ -262,6 +263,9 @@ export default function ChatInterface() {
     const updatedConversations = deleteConversation(conversations, id);
     const nonEmptyConversations = updatedConversations.filter(c => c.messages.length > 0);
     
+    setConversations(updatedConversations);
+    saveConversations(nonEmptyConversations);
+    
     if (currentConversationId === id) {
       if (nonEmptyConversations.length > 0) {
         const latestConv = nonEmptyConversations.sort((a, b) => b.updatedAt - a.updatedAt)[0];
@@ -270,27 +274,12 @@ export default function ChatInterface() {
         setConversations(finalConversations);
         setCurrentConversationId(newConv.id);
         setMessages(newConv.messages);
-        saveConversations(nonEmptyConversations);
       } else {
         const newConv = createConversation();
         setConversations([newConv]);
         setCurrentConversationId(newConv.id);
         setMessages(newConv.messages);
-        saveConversations([]);
       }
-    } else {
-      const currentConv = conversations.find(c => c.id === currentConversationId);
-      if (currentConv && currentConv.messages.length === 0) {
-        const finalConversations = [currentConv, ...nonEmptyConversations];
-        setConversations(finalConversations);
-      } else {
-        const newConv = createConversation();
-        const finalConversations = [newConv, ...nonEmptyConversations];
-        setConversations(finalConversations);
-        setCurrentConversationId(newConv.id);
-        setMessages(newConv.messages);
-      }
-      saveConversations(nonEmptyConversations);
     }
   };
 
