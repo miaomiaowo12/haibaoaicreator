@@ -102,6 +102,9 @@ export async function POST(request: NextRequest) {
 
     if (isThumbnailMode) {
       requestBody.sequential_image_generation = 'auto';
+      (requestBody as Record<string, unknown>).sequential_image_generation_options = {
+        max_images: 3
+      };
     }
 
     if (selectedImage) {
