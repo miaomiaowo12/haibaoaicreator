@@ -86,22 +86,29 @@ export default function ChatInterface() {
     if (!currentConversationId) return;
     if (newMessages.length === 0) return;
     
-    const updatedConversations = updateConversation(conversations, currentConversationId, newMessages);
+    let updatedConversations = updateConversation(conversations, currentConversationId, newMessages);
+    
+    // 如果当前是空会话，将其转换为普通会话（改变ID）
+    if (currentConversationId === EMPTY_CONVERSATION_ID) {
+      const currentConv = updatedConversations.find(c => c.id === EMPTY_CONVERSATION_ID);
+      if (currentConv) {
+        // 创建一个新的普通会话（不固定ID）
+        const realConv: Conversation = {
+          ...currentConv,
+          id: `conv-${Date.now()}`,
+        };
+        
+        // 替换空会话
+        const nonEmptyConversations = updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
+        updatedConversations = [realConv, ...nonEmptyConversations];
+        
+        // 更新当前会话ID
+        setCurrentConversationId(realConv.id);
+      }
+    }
+    
     setConversations(updatedConversations);
     saveConversations(updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID));
-  };
-
-  const convertEmptyToRealConversation = (newMessages: Message[]) => {
-    if (currentConversationId !== EMPTY_CONVERSATION_ID) return;
-    
-    const nonEmptyConversations = conversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
-    const newEmptyConv = createEmptyConversation();
-    const finalConversations = [newEmptyConv, ...nonEmptyConversations];
-    
-    setConversations(finalConversations);
-    setCurrentConversationId(newEmptyConv.id);
-    setMessages(newEmptyConv.messages);
-    saveConversations(nonEmptyConversations);
   };
 
   const handleRemoveBackground = () => {
@@ -236,7 +243,6 @@ export default function ChatInterface() {
       const finalMessages = [...newMessages, assistantMessage];
       setMessages(finalMessages);
       saveMessages(finalMessages);
-      convertEmptyToRealConversation(finalMessages);
     } catch (error) {
       const errorMessage: Message = {
         id: generateId(),
