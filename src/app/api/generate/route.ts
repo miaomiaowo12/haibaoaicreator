@@ -29,11 +29,10 @@ export async function POST(request: NextRequest) {
 
     let contextSummary = '';
     if (messages && messages.length > 1) {
-      const recentMessages = messages.slice(-6);
+      const recentMessages = messages.slice(-10);
       contextSummary = recentMessages
-        .filter((m: ChatMessage) => m.role === 'user')
-        .map((m: ChatMessage) => m.content)
-        .join('；');
+        .map((m: ChatMessage) => m.role === 'user' ? `用户：${m.content}` : `助手：${m.content}`)
+        .join('\n');
     }
 
     const promptParts: string[] = [];
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (contextSummary) {
-      enhancedPrompt = `用户之前的描述：${contextSummary}。当前需求：${enhancedPrompt}`;
+      enhancedPrompt = `【对话上下文】\n${contextSummary}\n\n【当前需求】\n${enhancedPrompt}`;
     }
 
     if (backgroundImage) {

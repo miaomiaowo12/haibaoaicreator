@@ -370,7 +370,7 @@ export default function ChatInterface() {
           posterType: selectedType,
           colorScheme: selectedColorScheme,
           typography: selectedTypography,
-          messages: messages.slice(0, messageIndex - 1).map(m => ({
+          messages: messages.slice(0, messageIndex).map(m => ({
             role: m.role,
             content: m.content,
           })),
