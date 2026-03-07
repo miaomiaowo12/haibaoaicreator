@@ -118,7 +118,7 @@ export default function ChatInterface() {
     }
   };
 
-  const compressImage = (dataUrl: string, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
+  const compressImage = (dataUrl: string, maxWidth: number = 600, quality: number = 0.5): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -137,7 +137,8 @@ export default function ChatInterface() {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          // 使用WebP格式，压缩率更高
+          const compressedDataUrl = canvas.toDataURL('image/webp', quality);
           resolve(compressedDataUrl);
         } else {
           resolve(dataUrl);
@@ -161,10 +162,10 @@ export default function ChatInterface() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // 检查文件大小（限制为5MB）
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // 检查文件大小（限制为20MB）
+    const maxSize = 20 * 1024 * 1024; // 20MB
     if (file.size > maxSize) {
-      alert('图片文件过大，请选择小于5MB的图片');
+      alert('图片文件过大，请选择小于20MB的图片');
       e.target.value = '';
       return;
     }
@@ -174,7 +175,8 @@ export default function ChatInterface() {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
         try {
-          const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
+          const compressedDataUrl = await compressImage(dataUrl, 600, 0.5);
+          console.log('压缩后大小:', compressedDataUrl.length, '字符');
           setBackgroundImage(compressedDataUrl);
         } catch (err) {
           console.error('图片压缩失败:', err);
