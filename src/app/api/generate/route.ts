@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       const recentMessages = messages.slice(-10);
       contextSummary = recentMessages
         .map((m: ChatMessage) => m.role === 'user' ? `用户：${m.content}` : `助手：${m.content}`)
-        .join('\n');
+        .join(' | ');
     }
 
     const promptParts: string[] = [];
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (contextSummary) {
-      enhancedPrompt = `【对话上下文】${contextSummary.replace(/\n/g, ' | ')}【当前需求】${enhancedPrompt}`;
+      enhancedPrompt = `【对话上下文】${contextSummary}【当前需求】${enhancedPrompt}`;
     }
 
     if (backgroundImage) {
@@ -94,13 +94,6 @@ export async function POST(request: NextRequest) {
       size: size,
       response_format: 'url',
     };
-
-    if (isThumbnailMode) {
-      requestBody.sequential_image_generation = 'auto';
-      (requestBody as Record<string, unknown>).sequential_image_generation_options = {
-        max_images: 3
-      };
-    }
 
     if (selectedImage) {
       requestBody.image = selectedImage;
