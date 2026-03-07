@@ -80,8 +80,27 @@ export async function POST(request: NextRequest) {
     };
 
     if (backgroundImage) {
-      requestBody.image = backgroundImage;
+      let imageUrl = backgroundImage;
+      
+      if (backgroundImage.startsWith('data:image/')) {
+        const matches = backgroundImage.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          const format = matches[1].toLowerCase();
+          const base64Data = matches[2];
+          imageUrl = `data:image/${format};base64,${base64Data}`;
+          console.log('背景图格式:', format, 'Base64长度:', base64Data.length);
+        }
+      }
+      
+      requestBody.image = imageUrl;
     }
+
+    console.log('请求参数:', JSON.stringify({
+      model: requestBody.model,
+      prompt: requestBody.prompt?.toString().substring(0, 100),
+      hasImage: !!requestBody.image,
+      imageSize: requestBody.image ? (requestBody.image as string).length : 0
+    }));
 
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
       method: 'POST',
