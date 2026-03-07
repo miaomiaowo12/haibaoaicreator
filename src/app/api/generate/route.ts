@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
     };
 
     if (isThumbnailMode) {
+      enhancedPrompt = `请生成3张不同风格的海报方案。${enhancedPrompt}`;
       requestBody.sequential_image_generation = 'auto';
-      requestBody.sequential_image_generation_options = { max_images: 3 };
     }
 
     if (selectedImage) {

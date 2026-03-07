@@ -342,6 +342,74 @@ export default function ChatInterface() {
     }
   };
 
+  const handleRegenerateThumbnails = async (messageId: string) => {
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex <= 0) return;
+
+    const userMessage = messages[messageIndex - 1];
+    if (userMessage.role !== 'user') return;
+
+    const loadingMessage: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: '正在重新生成方案，请稍候...',
+    };
+
+    const newMessages = [...messages.slice(0, messageIndex), loadingMessage];
+    setMessages(newMessages);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: userMessage.content.replace('（已上传背景图）', ''),
+          posterType: selectedType,
+          colorScheme: selectedColorScheme,
+          typography: selectedTypography,
+          messages: messages.slice(0, messageIndex - 1).map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+          mode: 'thumbnails',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const thumbnails = data.data?.map((img: { url: string }) => img.url) || [];
+      
+      const assistantMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: '已重新生成方案，请选择一个：',
+        thumbnails: thumbnails,
+      };
+
+      const finalMessages = [...newMessages.slice(0, -1), assistantMessage];
+      setMessages(finalMessages);
+      saveMessages(finalMessages);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: `重新生成失败：${error instanceof Error ? error.message : '未知错误'}`,
+      };
+      const finalMessages = [...newMessages.slice(0, -1), errorMessage];
+      setMessages(finalMessages);
+      saveMessages(finalMessages);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleNewConversation = () => {
     const nonEmptyConversations = conversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
     const emptyConv = createEmptyConversation();
@@ -476,25 +544,36 @@ export default function ChatInterface() {
                   </button>
                   <p className="whitespace-pre-wrap text-[15px] leading-relaxed pr-8">{message.content}</p>
                   {message.thumbnails && message.thumbnails.length > 0 && (
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      {message.thumbnails.map((thumb, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleSelectThumbnail(thumb, messages.findIndex(m => m.id === message.id))}
-                          className="relative group rounded-lg overflow-hidden border-2 border-transparent hover:border-purple-500 transition-all"
-                        >
-                          <img
-                            src={thumb}
-                            alt={`方案 ${idx + 1}`}
-                            className="w-full aspect-square object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                            <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-purple-600 px-2 py-1 rounded">
-                              选择此方案
-                            </span>
-                          </div>
-                        </button>
-                      ))}
+                    <div className="mt-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        {message.thumbnails.map((thumb, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleSelectThumbnail(thumb, messages.findIndex(m => m.id === message.id))}
+                            className="relative group rounded-lg overflow-hidden border-2 border-transparent hover:border-purple-500 transition-all"
+                          >
+                            <img
+                              src={thumb}
+                              alt={`方案 ${idx + 1}`}
+                              className="w-full aspect-square object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium bg-purple-600 px-3 py-1.5 rounded">
+                                选择此方案
+                              </span>
+                            </div>
+                            <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                              方案 {idx + 1}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => handleRegenerateThumbnails(message.id)}
+                        className="mt-3 w-full py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
+                      >
+                        对所有方案都不满意？重新生成
+                      </button>
                     </div>
                   )}
                   {message.generatedImage && (
