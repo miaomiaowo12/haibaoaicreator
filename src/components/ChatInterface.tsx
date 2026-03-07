@@ -97,7 +97,7 @@ export default function ChatInterface() {
 
   const handleImageUpload = async (dataUrl: string) => {
     try {
-      const compressedDataUrl = await compressImage(dataUrl, 1024, 0.8);
+      const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
       setBackgroundImage(compressedDataUrl);
     } catch (err) {
       console.error('图片压缩失败:', err);
@@ -105,7 +105,7 @@ export default function ChatInterface() {
     }
   };
 
-  const compressImage = (dataUrl: string, maxWidth: number = 1024, quality: number = 0.8): Promise<string> => {
+  const compressImage = (dataUrl: string, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -153,7 +153,7 @@ export default function ChatInterface() {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
         try {
-          const compressedDataUrl = await compressImage(dataUrl, 1024, 0.8);
+      const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
           setBackgroundImage(compressedDataUrl);
         } catch (err) {
           console.error('图片压缩失败:', err);
