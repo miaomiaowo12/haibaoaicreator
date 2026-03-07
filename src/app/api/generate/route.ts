@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { enhancePrompt, extractStyleFromInput, extractPlatformFromInput } from '@/lib/promptEnhancer';
+import { 
+  enhancePrompt, 
+  extractStyleFromInput, 
+  extractPlatformFromInput,
+  getPosterTypeSkill,
+  getColorSchemeSkill,
+  getTypographySkill
+} from '@/lib/promptEnhancer';
 import { 
   getColorSchemePrompt, 
   getTypographyPrompt,
@@ -38,12 +45,33 @@ export async function POST(request: NextRequest) {
         .join('；');
     }
 
+    const promptParts: string[] = [];
+
+    const posterTypeSkill = getPosterTypeSkill(posterType);
+    if (posterTypeSkill) {
+      promptParts.push(posterTypeSkill);
+    }
+
+    const colorSchemeSkill = getColorSchemeSkill(finalColorScheme);
+    if (colorSchemeSkill) {
+      promptParts.push(colorSchemeSkill);
+    }
+
+    const typographySkill = getTypographySkill(typography);
+    if (typographySkill) {
+      promptParts.push(typographySkill);
+    }
+
     let enhancedPrompt = enhancePrompt(
       prompt,
       posterType,
       detectedStyle,
       detectedPlatform
     );
+
+    if (promptParts.length > 0) {
+      enhancedPrompt = promptParts.join('，') + '，' + enhancedPrompt;
+    }
 
     if (contextSummary) {
       enhancedPrompt = `用户之前的描述：${contextSummary}。当前需求：${enhancedPrompt}`;
@@ -61,6 +89,10 @@ export async function POST(request: NextRequest) {
     const typographyPrompt = getTypographyPrompt(typography);
     if (typographyPrompt) {
       enhancedPrompt += `，${typographyPrompt}`;
+    }
+
+    if (!posterType && !finalColorScheme && !typography) {
+      enhancedPrompt += '，生成一张高清精美、视觉协调、质感高级的通用创意海报，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象';
     }
 
     enhancedPrompt += `。【重要规则】
