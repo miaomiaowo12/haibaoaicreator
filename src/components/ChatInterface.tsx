@@ -64,16 +64,13 @@ export default function ChatInterface() {
     const savedConversations = getConversations();
     const nonEmptyConversations = savedConversations.filter(c => c.messages.length > 0);
     
+    const newConv = createConversation();
+    
     if (nonEmptyConversations.length === 0) {
-      const newConv = createConversation();
       setConversations([newConv]);
       setCurrentConversationId(newConv.id);
       setMessages(newConv.messages);
     } else {
-      const sortedConversations = nonEmptyConversations.sort((a, b) => b.updatedAt - a.updatedAt);
-      const latestConv = sortedConversations[0];
-      
-      const newConv = createConversation();
       const updatedConversations = [newConv, ...nonEmptyConversations];
       setConversations(updatedConversations);
       setCurrentConversationId(newConv.id);
@@ -263,23 +260,30 @@ export default function ChatInterface() {
     const updatedConversations = deleteConversation(conversations, id);
     const nonEmptyConversations = updatedConversations.filter(c => c.messages.length > 0);
     
-    setConversations(updatedConversations);
-    saveConversations(nonEmptyConversations);
-    
     if (currentConversationId === id) {
       if (nonEmptyConversations.length > 0) {
-        const latestConv = nonEmptyConversations.sort((a, b) => b.updatedAt - a.updatedAt)[0];
         const newConv = createConversation();
         const finalConversations = [newConv, ...nonEmptyConversations];
         setConversations(finalConversations);
         setCurrentConversationId(newConv.id);
         setMessages(newConv.messages);
+        saveConversations(nonEmptyConversations);
       } else {
         const newConv = createConversation();
         setConversations([newConv]);
         setCurrentConversationId(newConv.id);
         setMessages(newConv.messages);
+        saveConversations([]);
       }
+    } else {
+      const currentConv = updatedConversations.find(c => c.id === currentConversationId);
+      if (currentConv && currentConv.messages.length === 0) {
+        const finalConversations = [currentConv, ...nonEmptyConversations];
+        setConversations(finalConversations);
+      } else {
+        setConversations(updatedConversations);
+      }
+      saveConversations(nonEmptyConversations);
     }
   };
 
