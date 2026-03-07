@@ -87,21 +87,21 @@ export default function ChatInterface() {
     if (newMessages.length === 0) return;
     
     const updatedConversations = updateConversation(conversations, currentConversationId, newMessages);
+    setConversations(updatedConversations);
+    saveConversations(updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID));
+  };
+
+  const convertEmptyToRealConversation = (newMessages: Message[]) => {
+    if (currentConversationId !== EMPTY_CONVERSATION_ID) return;
     
-    // 如果当前是空会话，发送消息后需要创建新的空会话
-    if (currentConversationId === EMPTY_CONVERSATION_ID) {
-      const nonEmptyConversations = updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
-      const newEmptyConv = createEmptyConversation();
-      const finalConversations = [newEmptyConv, ...nonEmptyConversations];
-      
-      setConversations(finalConversations);
-      setCurrentConversationId(newEmptyConv.id);
-      setMessages(newEmptyConv.messages);
-      saveConversations(nonEmptyConversations);
-    } else {
-      setConversations(updatedConversations);
-      saveConversations(updatedConversations);
-    }
+    const nonEmptyConversations = conversations.filter(c => c.id !== EMPTY_CONVERSATION_ID);
+    const newEmptyConv = createEmptyConversation();
+    const finalConversations = [newEmptyConv, ...nonEmptyConversations];
+    
+    setConversations(finalConversations);
+    setCurrentConversationId(newEmptyConv.id);
+    setMessages(newEmptyConv.messages);
+    saveConversations(nonEmptyConversations);
   };
 
   const handleRemoveBackground = () => {
@@ -118,7 +118,7 @@ export default function ChatInterface() {
     }
   };
 
-  const compressImage = (dataUrl: string, maxWidth: number = 600, quality: number = 0.5): Promise<string> => {
+  const compressImage = (dataUrl: string, maxWidth: number = 512, quality: number = 0.4): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -137,8 +137,8 @@ export default function ChatInterface() {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // 使用WebP格式，压缩率更高
-          const compressedDataUrl = canvas.toDataURL('image/webp', quality);
+          // 使用JPEG格式，兼容性更好
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
           resolve(compressedDataUrl);
         } else {
           resolve(dataUrl);
@@ -236,6 +236,7 @@ export default function ChatInterface() {
       const finalMessages = [...newMessages, assistantMessage];
       setMessages(finalMessages);
       saveMessages(finalMessages);
+      convertEmptyToRealConversation(finalMessages);
     } catch (error) {
       const errorMessage: Message = {
         id: generateId(),

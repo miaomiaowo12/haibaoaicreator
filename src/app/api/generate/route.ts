@@ -131,8 +131,8 @@ export async function POST(request: NextRequest) {
           imageUrl = `data:image/${format};base64,${base64Data}`;
           console.log('背景图格式:', format, 'Base64长度:', base64Data.length);
           
-          // 如果图片太大（超过800KB base64 ≈ 1088000字符），则不发送图片
-          if (base64Data.length > 1088000) {
+          // 如果图片太大（超过400KB base64 ≈ 544000字符），则不发送图片
+          if (base64Data.length > 544000) {
             console.log('背景图太大，不发送图片，Base64长度:', base64Data.length);
             requestBody.image = undefined;
             enhancedPrompt = `用户上传了一张背景图作为参考（图片过大无法处理），${enhancedPrompt}`;
