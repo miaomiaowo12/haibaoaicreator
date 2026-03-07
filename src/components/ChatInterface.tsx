@@ -93,6 +93,10 @@ export default function ChatInterface() {
     setBackgroundImage(null);
   };
 
+  const handleImageUpload = (dataUrl: string) => {
+    setBackgroundImage(dataUrl);
+  };
+
   const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -347,6 +351,7 @@ export default function ChatInterface() {
             onSend={handleSendMessage}
             disabled={isLoading}
             placeholder="告诉我你的海报需求，比如用途、文案、风格以及发布平台"
+            onImageUpload={handleImageUpload}
           />
         </div>
       </div>
