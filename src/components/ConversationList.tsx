@@ -19,7 +19,8 @@ export default function ConversationList({
   onNew,
   onClose,
 }: ConversationListProps) {
-  const sortedConversations = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  const nonEmptyConversations = conversations.filter(conv => conv.messages.length > 0);
+  const sortedConversations = [...nonEmptyConversations].sort((a, b) => b.updatedAt - a.updatedAt);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
