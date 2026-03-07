@@ -151,16 +151,24 @@ export default function ChatInterface() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // 检查文件大小（限制为5MB）
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert('图片文件过大，请选择小于5MB的图片');
+      e.target.value = '';
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
         try {
-      const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
+          const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
           setBackgroundImage(compressedDataUrl);
         } catch (err) {
           console.error('图片压缩失败:', err);
-          setBackgroundImage(dataUrl);
+          alert('图片处理失败，请尝试其他图片');
         }
       }
     };
