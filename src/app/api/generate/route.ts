@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-  enhancePrompt, 
-  extractStyleFromInput, 
-  extractPlatformFromInput,
   getPosterTypeSkill,
   getColorSchemeSkill,
   getTypographySkill
 } from '@/lib/promptEnhancer';
-import { 
-  getColorSchemePrompt, 
-  getTypographyPrompt,
-  recommendColorScheme
-} from '@/lib/designTemplates';
+import { recommendColorScheme } from '@/lib/designTemplates';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -32,8 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const detectedStyle = extractStyleFromInput(prompt);
-    const detectedPlatform = extractPlatformFromInput(prompt);
     const finalColorScheme = colorScheme || (posterType ? recommendColorScheme(posterType) : null);
 
     let contextSummary = '';
@@ -46,8 +37,6 @@ export async function POST(request: NextRequest) {
     }
 
     const promptParts: string[] = [];
-
-    promptParts.push('高清画质，文字清晰可读，字体端正清晰，无模糊无乱码');
 
     const posterTypeSkill = getPosterTypeSkill(posterType);
     if (posterTypeSkill) {
@@ -64,16 +53,9 @@ export async function POST(request: NextRequest) {
       promptParts.push(typographySkill);
     }
 
-    let enhancedPrompt = enhancePrompt(
-      prompt,
-      posterType,
-      detectedStyle,
-      detectedPlatform
-    );
+    promptParts.push('高清 1024×1024 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁');
 
-    if (promptParts.length > 0) {
-      enhancedPrompt = promptParts.join('，') + '，' + enhancedPrompt;
-    }
+    let enhancedPrompt = promptParts.join('；');
 
     if (contextSummary) {
       enhancedPrompt = `用户之前的描述：${contextSummary}。当前需求：${enhancedPrompt}`;
@@ -83,18 +65,8 @@ export async function POST(request: NextRequest) {
       enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
     }
 
-    const colorPrompt = getColorSchemePrompt(finalColorScheme);
-    if (colorPrompt) {
-      enhancedPrompt += `，${colorPrompt}`;
-    }
-
-    const typographyPrompt = getTypographyPrompt(typography);
-    if (typographyPrompt) {
-      enhancedPrompt += `，${typographyPrompt}`;
-    }
-
     if (!posterType && !finalColorScheme && !typography) {
-      enhancedPrompt += '，生成一张高清精美、视觉协调、质感高级的通用创意海报，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象';
+      enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象';
     }
 
     const textMatch = prompt.match(/[""「」『』【】]([^""「」『』【】]+)[""「」『』【】]/);
@@ -114,7 +86,7 @@ export async function POST(request: NextRequest) {
     console.log('是否有背景图:', !!backgroundImage);
 
     const requestBody: Record<string, unknown> = {
-      model: 'doubao-seedream-4-0-250828',
+      model: 'doubao-seedream-4-5-251128',
       prompt: enhancedPrompt,
       size: '1024x1024',
       response_format: 'url',
