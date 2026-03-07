@@ -60,10 +60,6 @@ export async function POST(request: NextRequest) {
 
     let enhancedPrompt = promptParts.join('；');
 
-    if (isThumbnailMode) {
-      enhancedPrompt = `请生成3张不同风格的海报方案。${enhancedPrompt}`;
-    }
-
     if (contextSummary) {
       enhancedPrompt = `【对话上下文】${contextSummary}【当前需求】${enhancedPrompt}`;
     }
@@ -94,10 +90,6 @@ export async function POST(request: NextRequest) {
       size: size,
       response_format: 'url',
     };
-
-    if (isThumbnailMode) {
-      requestBody.sequential_image_generation = 'auto';
-    }
 
     if (selectedImage) {
       requestBody.image = selectedImage;
@@ -131,8 +123,56 @@ export async function POST(request: NextRequest) {
       hasImage: !!requestBody.image,
       imageSize: requestBody.image ? (requestBody.image as string).length : 0,
       size: requestBody.size,
-      sequential_image_generation: requestBody.sequential_image_generation
+      isThumbnailMode
     }));
+
+    if (isThumbnailMode) {
+      const styleVariations = [
+        '风格1：现代简约，色彩明快，构图简洁',
+        '风格2：复古优雅，色调柔和，层次丰富',
+        '风格3：创意活泼，色彩鲜艳，动感十足'
+      ];
+      
+      const results = await Promise.all(
+        styleVariations.map(async (style, index) => {
+          const variationPrompt = `${enhancedPrompt}。${style}`;
+          const variationBody = {
+            ...requestBody,
+            prompt: variationPrompt,
+          };
+          
+          const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify(variationBody),
+          });
+          
+          const data = await res.json();
+          if (!res.ok) {
+            console.error(`图片${index + 1}生成失败:`, data);
+            return null;
+          }
+          return data.data?.[0]?.url || data.url;
+        })
+      );
+      
+      const validResults = results.filter(Boolean);
+      
+      if (validResults.length === 0) {
+        return NextResponse.json(
+          { error: '所有图片生成失败' },
+          { status: 500 }
+        );
+      }
+      
+      return NextResponse.json({
+        created: Date.now(),
+        data: validResults.map(url => ({ url }))
+      });
+    }
 
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
       method: 'POST',
