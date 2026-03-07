@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       promptParts.push(typographySkill);
     }
 
-    promptParts.push('高清 2K 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁');
+    promptParts.push('高清 2048×2048 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁');
 
     let enhancedPrompt = promptParts.join('；');
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const requestBody: Record<string, unknown> = {
       model: 'doubao-seedream-4-5-251128',
       prompt: enhancedPrompt,
-      size: '2K',
+      size: '2048x2048',
       response_format: 'url',
     };
 
