@@ -53,7 +53,9 @@ export default function ChatInterface() {
   const [showDesignOptions, setShowDesignOptions] = useState(false);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [showConversationList, setShowConversationList] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const bgInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,13 +89,32 @@ export default function ChatInterface() {
     saveConversations(updatedConversations);
   };
 
+  const handleRemoveBackground = () => {
+    setBackgroundImage(null);
+  };
+
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setBackgroundImage(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
 
     const userMessage: Message = {
       id: generateId(),
       role: 'user',
-      content,
+      content: backgroundImage ? `${content}（已上传背景图）` : content,
     };
 
     const newMessages = [...messages, userMessage];
@@ -111,6 +132,7 @@ export default function ChatInterface() {
           posterType: selectedType,
           colorScheme: selectedColorScheme,
           typography: selectedTypography,
+          backgroundImage: backgroundImage,
           messages: messages.map(m => ({
             role: m.role,
             content: m.content,
@@ -287,6 +309,40 @@ export default function ChatInterface() {
         </div>
 
         <div className="input-area p-4 safe-area-bottom flex-shrink-0 shadow-input">
+          <input
+            ref={bgInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleBgUpload}
+            style={{ display: 'none' }}
+          />
+          
+          <div className="mb-3 flex items-center gap-2">
+            <button
+              onClick={() => bgInputRef.current?.click()}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:border-purple-400 hover:text-purple-600 transition-colors"
+            >
+              + 添加背景图
+            </button>
+            
+            {backgroundImage && (
+              <div className="flex items-center gap-2 flex-1">
+                <img 
+                  src={backgroundImage} 
+                  alt="背景图预览" 
+                  className="w-12 h-12 object-cover rounded border border-gray-200"
+                />
+                <span className="text-sm text-gray-500">已上传背景图</span>
+                <button
+                  onClick={handleRemoveBackground}
+                  className="text-red-500 hover:text-red-700 text-sm ml-auto"
+                >
+                  移除
+                </button>
+              </div>
+            )}
+          </div>
+          
           <MessageInput
             onSend={handleSendMessage}
             disabled={isLoading}

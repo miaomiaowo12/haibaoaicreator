@@ -14,7 +14,7 @@ interface ChatMessage {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, posterType, colorScheme, typography, messages } = body;
+    const { prompt, posterType, colorScheme, typography, messages, backgroundImage } = body;
 
     const apiKey = process.env.DOUBAO_API_KEY;
 
@@ -49,6 +49,10 @@ export async function POST(request: NextRequest) {
       enhancedPrompt = `用户之前的描述：${contextSummary}。当前需求：${enhancedPrompt}`;
     }
 
+    if (backgroundImage) {
+      enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
+    }
+
     const colorPrompt = getColorSchemePrompt(finalColorScheme);
     if (colorPrompt) {
       enhancedPrompt += `，${colorPrompt}`;
@@ -66,6 +70,7 @@ export async function POST(request: NextRequest) {
 
     console.log('原始提示词:', prompt);
     console.log('增强后提示词:', enhancedPrompt);
+    console.log('是否有背景图:', !!backgroundImage);
 
     const requestBody: Record<string, unknown> = {
       model: 'doubao-seedream-4-0-250828',
@@ -73,6 +78,10 @@ export async function POST(request: NextRequest) {
       size: '1024x1024',
       response_format: 'url',
     };
+
+    if (backgroundImage) {
+      requestBody.image = backgroundImage;
+    }
 
     const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
       method: 'POST',
