@@ -3,7 +3,7 @@ import { getStore } from '@netlify/blobs';
 import { 
   getPosterTypeSkill,
   getStyleSkill,
-  getSystemSkill,
+  getGeneralSuffix,
   getFestivalSkill
 } from '../../src/lib/promptEnhancer';
 
@@ -51,7 +51,41 @@ export default async (req: Request, context: Context) => {
       return new Response(null, { status: 202 });
     }
 
-    // Build prompt using the same logic as the original
+    // Build prompt: 海报类型 Skill + 风格 Skill + 通用后缀 + 用户输入 + 节日 Skill
+    const promptParts: string[] = [];
+    
+    // 1. 海报类型 Skill
+    const posterTypeSkill = getPosterTypeSkill(posterType);
+    if (posterTypeSkill) {
+      promptParts.push(posterTypeSkill);
+    } else {
+      promptParts.push('通用创意海报，画面美观协调，元素贴合主题，构图合理');
+    }
+    
+    // 2. 风格 Skill
+    const styleSkill = getStyleSkill(style);
+    if (styleSkill) {
+      promptParts.push(styleSkill);
+    }
+    
+    // 3. 通用后缀
+    promptParts.push(getGeneralSuffix());
+    
+    // 4. 用户输入的要求内容提取
+    promptParts.push(`用户需求：${prompt}`);
+    
+    // 5. 节日 Skill（从用户输入中识别）
+    const festivalSkill = getFestivalSkill(prompt);
+    if (festivalSkill) {
+      promptParts.push(festivalSkill);
+    }
+
+    const hasImage = !!backgroundImage || !!selectedImage;
+    const size = hasImage ? '2048x2048' : '2K';
+
+    let enhancedPrompt = promptParts.join('，');
+    
+    // 处理对话上下文
     let contextSummary = '';
     if (messages && messages.length > 1) {
       const recentMessages = messages.slice(-10);
@@ -59,28 +93,7 @@ export default async (req: Request, context: Context) => {
         .map((m: ChatMessage) => m.role === 'user' ? `用户：${m.content}` : `助手：${m.content}`)
         .join(' | ');
     }
-
-    const promptParts: string[] = [];
-    promptParts.push(`用户需求：${prompt}`);
-
-    const festivalSkill = getFestivalSkill(prompt);
-    if (festivalSkill) promptParts.push(festivalSkill);
-
-    const posterTypeSkill = getPosterTypeSkill(posterType);
-    if (posterTypeSkill) promptParts.push(posterTypeSkill);
-
-    const styleSkill = getStyleSkill(style);
-    if (styleSkill) promptParts.push(styleSkill);
-
-    const hasImage = !!backgroundImage || !!selectedImage;
-    const size = hasImage ? '2048x2048' : '2K';
     
-    promptParts.push(`高清分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁`);
-
-    let enhancedPrompt = promptParts.join('；');
-    const systemSkill = getSystemSkill();
-    enhancedPrompt = `${systemSkill}。${enhancedPrompt}`;
-
     if (contextSummary) {
       enhancedPrompt = `【对话上下文】${contextSummary}【当前需求】${enhancedPrompt}`;
     }
@@ -89,15 +102,13 @@ export default async (req: Request, context: Context) => {
       enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
     }
 
-    if (!posterType && !style) {
-      enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，采用色彩鲜艳明亮、温暖亲切友好的风格，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象，传递积极正面的情感';
-    }
-
+    // 提取用户明确要求的文字内容
     const textMatch = prompt.match(/[""「」『』【】]([^""「」『』【】]+)[""「」『』【】]/);
     if (textMatch) {
       enhancedPrompt += `。用户明确要求的文字内容："${textMatch[1]}"，仅显示此文字，不添加其他任何文字`;
     }
 
+    // 严格规则
     enhancedPrompt += '。【严格规则】1.文字内容：海报中只能出现用户明确要求展示的文字内容，禁止添加任何用户未提及的文字；2.禁止出现：平台名称（抖音、小红书、微信等）、设计说明（海报设计、爆款、新品等）、随机数字、日期时间地点（除非用户提供）、水印签名、装饰性字母、无关符号；3.文字质量：所有文字必须清晰可读，字体大小适中（标题字号大、正文字号适中），边缘锐利无模糊，印刷级清晰度，无锯齿无毛边，字体端正不倾斜不变形；4.文字排版：文字对齐整齐，间距合理，层级分明，标题醒目，正文清晰，整体协调美观；5.纯净画面：画面干净整洁，无多余装饰文字，无乱码，无模糊字符，无不可识别的符号';
 
     console.log('[Background] 原始提示词:', prompt);
@@ -204,3 +215,4 @@ export default async (req: Request, context: Context) => {
 export const config: Config = {
   // No custom path needed - will be available at /.netlify/functions/generate-background
 };
+

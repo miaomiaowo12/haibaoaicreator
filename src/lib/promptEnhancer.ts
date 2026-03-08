@@ -1,5 +1,8 @@
 const SYSTEM_SKILL = `你是豆包 SeeDream 4.5 专属海报生成专家，深度理解用户对海报的用途、样式风格、文案内容、发布平台所有需求，精准提取信息并生成专业绘图指令，严格遵从用户要求，保证海报高清精致、文字清晰、构图合理、风格统一，完全贴合用户诉求。请特别注意：必须准确呈现用户描述中的具体主题（如节日名称、活动名称等），不得遗漏或替换用户明确提及的关键信息。`;
 
+// 通用后缀 - 所有海报都会附加的基础质量要求
+const GENERAL_SUFFIX = '高清精美、视觉协调、画面完整精致，采用色彩鲜艳明亮、温暖亲切友好的风格，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，主体突出，光影细腻，氛围感充足，画质清晰细腻，视觉效果生动形象，传递积极正面的情感，适合印刷与线上传播';
+
 const FESTIVAL_KEYWORDS: Record<string, string> = {
   '三八妇女节': '三八妇女节主题，融入女性元素、鲜花、爱心、女性力量符号',
   '妇女节': '三八妇女节主题，融入女性元素、鲜花、爱心、女性力量符号',
@@ -82,8 +85,8 @@ export function getFestivalSkill(input: string): string | null {
   return null;
 }
 
-export function getSystemSkill(): string {
-  return SYSTEM_SKILL;
+export function getGeneralSuffix(): string {
+  return GENERAL_SUFFIX;
 }
 
 export { POSTER_TYPE_SKILLS, STYLE_SKILLS, FESTIVAL_KEYWORDS };
