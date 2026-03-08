@@ -107,8 +107,16 @@ export async function POST(request: NextRequest) {
     if (selectedImage) {
       requestBody.image = selectedImage;
     } else if (backgroundImage) {
-      requestBody.image = backgroundImage;
-      console.log('使用 TOS 图片 URL:', backgroundImage);
+      if (backgroundImage.startsWith('http')) {
+        requestBody.image = backgroundImage;
+        console.log('使用 TOS 图片 URL:', backgroundImage);
+      } else {
+        console.error('无效的背景图 URL:', backgroundImage.substring(0, 100));
+        return NextResponse.json(
+          { error: '背景图 URL 无效，请重新上传' },
+          { status: 400 }
+        );
+      }
     }
 
     console.log('请求参数:', JSON.stringify({
@@ -145,7 +153,16 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify(variationBody),
           });
           
-          const data = await res.json();
+          const responseText = await res.text();
+          let data;
+          
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            console.error(`图片${index + 1}返回非 JSON:`, responseText.substring(0, 200));
+            return null;
+          }
+          
           if (!res.ok) {
             console.error(`图片${index + 1}生成失败:`, data);
             return null;
@@ -178,7 +195,18 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(requestBody),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('API 返回非 JSON 响应:', responseText.substring(0, 500));
+      return NextResponse.json(
+        { error: 'API 返回错误，请检查图片 URL 是否有效' },
+        { status: 500 }
+      );
+    }
 
     if (!response.ok) {
       console.error('API错误响应:', data);

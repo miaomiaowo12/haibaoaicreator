@@ -154,14 +154,18 @@ export default function ChatInterface() {
       const uploadData = await uploadResponse.json();
       
       if (uploadData.error) {
-        throw new Error(uploadData.error);
+        throw new Error(uploadData.details || uploadData.error);
+      }
+      
+      if (!uploadData.url || !uploadData.url.startsWith('http')) {
+        throw new Error('上传返回的 URL 无效');
       }
       
       console.log('图片已上传到 TOS:', uploadData.url);
       setBackgroundImage(uploadData.url);
     } catch (err) {
       console.error('图片上传失败:', err);
-      alert('图片上传失败，请重试');
+      alert(`图片上传失败：${err instanceof Error ? err.message : '请重试'}`);
     } finally {
       setIsUploadingImage(false);
     }
