@@ -122,6 +122,16 @@ export default function ChatInterface() {
     saveConversations(updatedConversations.filter(c => c.id !== EMPTY_CONVERSATION_ID));
   };
 
+  const handleCopyMessage = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
+
   const handleRemoveBackground = () => {
     setBackgroundImage(null);
   };
