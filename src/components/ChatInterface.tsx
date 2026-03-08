@@ -249,53 +249,18 @@ export default function ChatInterface() {
     if (!message || !message.thumbnails) return;
 
     setLoadingThumbnail(thumbnailUrl);
-    setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: '生成高清版本',
-          posterType: selectedType,
-          colorScheme: selectedColorScheme,
-          typography: selectedTypography,
-          selectedImage: thumbnailUrl,
-          mode: 'hd',
-        }),
-      });
+    const hdMessage: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: '高清海报已生成！点击图片可放大查看',
+      generatedImage: thumbnailUrl,
+    };
 
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      const hdMessage: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: '高清海报已生成！点击图片可放大查看',
-        generatedImage: data.data?.[0]?.url || data.url,
-      };
-
-      const newMessages = [...messages, hdMessage];
-      setMessages(newMessages);
-      saveMessages(newMessages);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: `生成高清图失败：${error instanceof Error ? error.message : '未知错误'}`,
-      };
-      const newMessages = [...messages, errorMessage];
-      setMessages(newMessages);
-      saveMessages(newMessages);
-    } finally {
-      setLoadingThumbnail(null);
-      setIsLoading(false);
-    }
+    const newMessages = [...messages, hdMessage];
+    setMessages(newMessages);
+    saveMessages(newMessages);
+    setLoadingThumbnail(null);
   };
 
   const handleRegenerateThumbnails = async (messageId: string) => {
