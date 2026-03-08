@@ -607,23 +607,26 @@ export default function ChatInterface() {
               selectedType={selectedType}
               onSelect={setSelectedType}
             />
-            <button
-              onClick={() => setShowStyleSelector(!showStyleSelector)}
-              className="mt-3 text-sm text-purple-600 font-medium"
-            >
-              {showStyleSelector ? '收起风格选择 ▲' : '展开风格选择 ▼'}
-            </button>
-          </div>
-
-          {showStyleSelector && (
-            <div className="mx-4 mt-2">
-              <StyleSelector
-                styles={POSTER_STYLES}
-                selectedStyle={selectedStyle}
-                onSelect={setSelectedStyle}
-              />
+            
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowStyleSelector(!showStyleSelector)}
+                className="text-sm text-purple-600 font-medium flex items-center gap-1"
+              >
+                {showStyleSelector ? '收起 ▲' : '展开风格选择 ▼'}
+              </button>
+              
+              {showStyleSelector && (
+                <div className="mt-3">
+                  <StyleSelector
+                    styles={POSTER_STYLES}
+                    selectedStyle={selectedStyle}
+                    onSelect={setSelectedStyle}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="p-4 space-y-3">
             {messages.map((message) => (
