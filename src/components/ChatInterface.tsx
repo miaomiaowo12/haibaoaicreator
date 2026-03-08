@@ -84,6 +84,37 @@ export default function ChatInterface() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoading) {
+        // 用户返回页面且正在生成中，给出提示
+        console.log('用户返回页面，继续等待生成结果...');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // 防止页面休眠（保持唤醒）
+    const wakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isLoading) {
+          // @ts-ignore
+          await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.log('Wake Lock 请求失败:', err);
+      }
+    };
+    
+    if (isLoading) {
+      wakeLock();
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLoading]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -614,7 +645,7 @@ export default function ChatInterface() {
           {isUploadingImage && (
             <div className="mb-3 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
               <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-              <span>图片上传中，请等待上传完成后再生成海报...</span>
+              <span>图片上传完成才可以输入内容</span>
             </div>
           )}
           
