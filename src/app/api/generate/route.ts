@@ -205,14 +205,19 @@ export async function POST(request: NextRequest) {
     });
 
     const responseText = await response.text();
+    console.log('API 响应状态:', response.status, response.statusText);
+    console.log('API 响应长度:', responseText.length);
+    console.log('API 响应前 1000 字符:', responseText.substring(0, 1000));
+    
     let data;
     
     try {
       data = JSON.parse(responseText);
-    } catch {
-      console.error('API 返回非 JSON 响应:', responseText.substring(0, 500));
+    } catch (parseError) {
+      console.error('API 返回非 JSON 响应');
+      console.error('完整响应:', responseText);
       return NextResponse.json(
-        { error: 'API 返回错误，请检查图片 URL 是否有效' },
+        { error: `API 返回错误 (${response.status}): 请检查图片 URL 是否可公开访问` },
         { status: 500 }
       );
     }
