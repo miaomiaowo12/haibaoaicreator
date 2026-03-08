@@ -609,9 +609,9 @@ export default function ChatInterface() {
 
         <div className="input-area p-4 safe-area-bottom flex-shrink-0 shadow-input">
           {isUploadingImage && (
-            <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
-              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-              <span>图片上传中...</span>
+            <div className="mb-3 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+              <span>图片上传中，请等待上传完成后再生成海报...</span>
             </div>
           )}
           
@@ -634,8 +634,8 @@ export default function ChatInterface() {
           
           <MessageInput
             onSend={handleSendMessage}
-            disabled={isLoading}
-            placeholder="告诉我你的海报需求，比如用途、文案、风格以及发布平台"
+            disabled={isLoading || isUploadingImage}
+            placeholder={isUploadingImage ? "图片上传中，请稍候..." : "告诉我你的海报需求，比如用途、文案、风格以及发布平台"}
             onImageUpload={handleImageUpload}
           />
         </div>
