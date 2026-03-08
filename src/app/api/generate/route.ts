@@ -13,6 +13,11 @@ interface ChatMessage {
   content: string;
 }
 
+// Netlify Functions 配置 - 300秒超时
+export const config = {
+  maxDuration: 300,
+};
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -78,7 +83,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (backgroundImage) {
-      enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
+      if (backgroundImage.startsWith('http')) {
+        enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
+      }
     }
 
     if (!posterType && !finalColorScheme && !typography) {
