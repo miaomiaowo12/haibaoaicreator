@@ -57,7 +57,7 @@ export default function ChatInterface() {
   const [showConversationList, setShowConversationList] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
+  const [loadingThumbnail, setLoadingThumbnail] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -261,7 +261,7 @@ export default function ChatInterface() {
         const assistantMessage: Message = {
           id: generateId(),
           role: 'assistant',
-          content: '已生成多个方案，请选择一个：',
+          content: '已生成多个海报，请选择一个生成高清图：',
           thumbnails: thumbnails,
         };
 
@@ -287,14 +287,7 @@ export default function ChatInterface() {
     const message = messages[messageIndex];
     if (!message || !message.thumbnails) return;
 
-    const loadingMessage: Message = {
-      id: generateId(),
-      role: 'assistant',
-      content: '正在生成高清大图，请稍候...',
-    };
-
-    const newMessages = [...messages, loadingMessage];
-    setMessages(newMessages);
+    setLoadingThumbnail(thumbnailUrl);
     setIsLoading(true);
 
     try {
@@ -326,19 +319,20 @@ export default function ChatInterface() {
         generatedImage: data.data?.[0]?.url || data.url,
       };
 
-      const finalMessages = [...newMessages.slice(0, -1), hdMessage];
-      setMessages(finalMessages);
-      saveMessages(finalMessages);
+      const newMessages = [...messages, hdMessage];
+      setMessages(newMessages);
+      saveMessages(newMessages);
     } catch (error) {
       const errorMessage: Message = {
         id: generateId(),
         role: 'assistant',
         content: `生成高清图失败：${error instanceof Error ? error.message : '未知错误'}`,
       };
-      const finalMessages = [...newMessages.slice(0, -1), errorMessage];
-      setMessages(finalMessages);
-      saveMessages(finalMessages);
+      const newMessages = [...messages, errorMessage];
+      setMessages(newMessages);
+      saveMessages(newMessages);
     } finally {
+      setLoadingThumbnail(null);
       setIsLoading(false);
     }
   };
@@ -390,7 +384,7 @@ export default function ChatInterface() {
       const assistantMessage: Message = {
         id: generateId(),
         role: 'assistant',
-        content: '已重新生成方案，请选择一个：',
+        content: '已重新生成海报，请选择一个生成高清图：',
         thumbnails: thumbnails,
       };
 
@@ -559,58 +553,41 @@ export default function ChatInterface() {
                           <button
                             key={idx}
                             onClick={() => {
-                              setSelectedThumbnail(thumb);
+                              setLoadingThumbnail(thumb);
                               handleSelectThumbnail(thumb, messages.findIndex(m => m.id === message.id));
                             }}
-                            className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
-                              selectedThumbnail === thumb 
-                                ? 'border-purple-600 ring-2 ring-purple-300' 
-                                : 'border-transparent hover:border-purple-400'
-                            }`}
+                            disabled={loadingThumbnail !== null}
+                            className="relative group rounded-lg overflow-hidden border-2 border-transparent hover:border-purple-400 transition-all disabled:opacity-70"
                           >
                             <img
                               src={thumb}
-                              alt={`方案 ${idx + 1}`}
+                              alt={`海报 ${idx + 1}`}
                               className="w-full aspect-square object-cover"
                             />
-                            <div className={`absolute inset-0 transition-colors flex items-center justify-center ${
-                              selectedThumbnail === thumb 
-                                ? 'bg-purple-600/30' 
-                                : 'bg-black/0 group-hover:bg-black/20'
-                            }`}>
-                              <span className={`text-sm font-medium px-3 py-1.5 rounded transition-all ${
-                                selectedThumbnail === thumb 
-                                  ? 'opacity-100 bg-purple-600 text-white' 
-                                  : 'opacity-0 group-hover:opacity-100 bg-purple-600 text-white'
-                              }`}>
-                                {selectedThumbnail === thumb ? '已选中' : '选择此方案'}
-                              </span>
-                            </div>
-                            <div className={`absolute top-2 left-2 text-xs px-2 py-1 rounded ${
-                              selectedThumbnail === thumb 
-                                ? 'bg-purple-600 text-white' 
-                                : 'bg-black/50 text-white'
-                            }`}>
-                              方案 {idx + 1}
-                            </div>
-                            {selectedThumbnail === thumb && (
-                              <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
+                            {loadingThumbnail === thumb && (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span className="text-white text-xs">生成高清图中...</span>
+                                </div>
+                              </div>
+                            )}
+                            {loadingThumbnail !== thumb && (
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium bg-purple-600 px-3 py-1.5 rounded">
+                                  生成高清图
+                                </span>
                               </div>
                             )}
                           </button>
                         ))}
                       </div>
                       <button
-                        onClick={() => {
-                          setSelectedThumbnail(null);
-                          handleRegenerateThumbnails(message.id);
-                        }}
-                        className="mt-3 w-full py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
+                        onClick={() => handleRegenerateThumbnails(message.id)}
+                        disabled={loadingThumbnail !== null}
+                        className="mt-3 w-full py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        对所有方案都不满意？重新生成
+                        对所有海报都不满意？重新生成
                       </button>
                     </div>
                   )}
