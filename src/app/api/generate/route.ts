@@ -147,8 +147,6 @@ export async function POST(request: NextRequest) {
       const styleVariations = [
         '风格1：现代简约，色彩明快，构图简洁',
         '风格2：复古优雅，色调柔和，层次丰富',
-        '风格3：创意活泼，色彩鲜艳，动感十足',
-        '风格4：高端大气，质感高级，光影精致'
       ];
       
       const results = await Promise.all(
