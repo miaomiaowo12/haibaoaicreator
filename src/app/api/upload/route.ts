@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 300秒超时
 
 export async function POST(request: NextRequest) {
   try {
