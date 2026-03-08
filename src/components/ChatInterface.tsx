@@ -58,8 +58,8 @@ export default function ChatInterface() {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [loadingThumbnail, setLoadingThumbnail] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const bgInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,6 +138,7 @@ export default function ChatInterface() {
 
   const handleImageUpload = async (dataUrl: string) => {
     try {
+      setIsUploadingImage(true);
       const response = await fetch(dataUrl);
       const blob = await response.blob();
       const file = new File([blob], 'background.jpg', { type: blob.type });
@@ -161,43 +162,9 @@ export default function ChatInterface() {
     } catch (err) {
       console.error('图片上传失败:', err);
       alert('图片上传失败，请重试');
+    } finally {
+      setIsUploadingImage(false);
     }
-  };
-
-  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const maxSize = 20 * 1024 * 1024;
-    if (file.size > maxSize) {
-      alert('图片文件过大，请选择小于20MB的图片');
-      e.target.value = '';
-      return;
-    }
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const uploadData = await uploadResponse.json();
-      
-      if (uploadData.error) {
-        throw new Error(uploadData.error);
-      }
-      
-      console.log('图片已上传到 TOS:', uploadData.url);
-      setBackgroundImage(uploadData.url);
-    } catch (err) {
-      console.error('图片上传失败:', err);
-      alert('图片上传失败，请重试');
-    }
-    
-    e.target.value = '';
   };
 
   const handleSendMessage = async (content: string) => {
@@ -612,43 +579,33 @@ export default function ChatInterface() {
         </div>
 
         <div className="input-area p-4 safe-area-bottom flex-shrink-0 shadow-input">
-          <input
-            ref={bgInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleBgUpload}
-            style={{ display: 'none' }}
-          />
+          {isUploadingImage && (
+            <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              <span>图片上传中...</span>
+            </div>
+          )}
           
-          <div className="mb-3 flex items-center gap-2">
-            <button
-              onClick={() => bgInputRef.current?.click()}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:border-purple-400 hover:text-purple-600 transition-colors"
-            >
-              + 添加背景图
-            </button>
-            
-            {backgroundImage && (
-              <div className="flex items-center gap-2 flex-1">
-                <img 
-                  src={backgroundImage} 
-                  alt="背景图预览" 
-                  className="w-12 h-12 object-cover rounded border border-gray-200"
-                />
-                <span className="text-sm text-gray-500">已上传背景图</span>
-                <button
-                  onClick={handleRemoveBackground}
-                  className="text-red-500 hover:text-red-700 text-sm ml-auto"
-                >
-                  移除
-                </button>
-              </div>
-            )}
-          </div>
+          {backgroundImage && !isUploadingImage && (
+            <div className="mb-3 flex items-center gap-2">
+              <img 
+                src={backgroundImage} 
+                alt="背景图预览" 
+                className="w-12 h-12 object-cover rounded border border-gray-200"
+              />
+              <span className="text-sm text-gray-500">已上传背景图</span>
+              <button
+                onClick={handleRemoveBackground}
+                className="text-red-500 hover:text-red-700 text-sm ml-auto"
+              >
+                移除
+              </button>
+            </div>
+          )}
           
           <MessageInput
             onSend={handleSendMessage}
-            disabled={isLoading}
+            disabled={isLoading || isUploadingImage}
             placeholder="告诉我你的海报需求，比如用途、文案、风格以及发布平台"
             onImageUpload={handleImageUpload}
           />
