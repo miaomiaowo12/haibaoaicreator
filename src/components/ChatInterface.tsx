@@ -297,7 +297,7 @@ export default function ChatInterface() {
     const userMessage: Message = {
       id: generateId(),
       role: 'user',
-      content: backgroundImage ? `${content}（已上传背景图）` : content,
+      content: backgroundImage ? `${content}（已上传参考图）` : content,
     };
 
     const newMessages = [...messages, userMessage];
@@ -469,7 +469,7 @@ export default function ChatInterface() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: userMessage.content.replace('（已上传背景图）', ''),
+          prompt: userMessage.content.replace('（已上传参考图）', ''),
           posterType: selectedType,
           style: selectedStyle,
           messages: messages.slice(0, messageIndex).map(m => ({
@@ -744,7 +744,7 @@ export default function ChatInterface() {
             <div className="mb-3 flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
               <img 
                 src={backgroundImage} 
-                alt="背景图预览" 
+                alt="参考图预览" 
                 className="w-12 h-12 object-cover rounded border border-gray-200"
               />
               <span className="text-sm text-gray-600">已上传完成，可以开始生成</span>

@@ -90,17 +90,17 @@ export async function POST(request: NextRequest) {
       enhancedPrompt = `【对话历史】${contextSummary}【当前任务】${enhancedPrompt}`;
     }
 
-    // 参考背景图（如果有）
+    // 参考参考图（如果有）
     if (backgroundImage) {
       if (backgroundImage.startsWith('http')) {
-        enhancedPrompt = `【参考图片】请参照用户上传的背景图风格和构图进行创作。${enhancedPrompt}`;
+        enhancedPrompt = `【参考图片】请参照用户上传的参考图风格和构图进行创作。${enhancedPrompt}`;
       }
     }
 
     console.log('原始提示词:', prompt);
     console.log('完整增强提示词:', enhancedPrompt.substring(0, 300) + '...');
     console.log('模式:', mode || 'single');
-    console.log('是否有背景图:', !!backgroundImage);
+    console.log('是否有参考图:', !!backgroundImage);
 
     // Build request
     const isThumbnailMode = mode === 'thumbnails' && !backgroundImage && !selectedImage;

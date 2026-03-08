@@ -112,9 +112,9 @@ export default async (req: Request, context: Context) => {
       enhancedPrompt = `【对话历史】${contextSummary}【当前任务】${enhancedPrompt}`;
     }
 
-    // 参考背景图（如果有）
+    // 参考参考图（如果有）
     if (backgroundImage) {
-      enhancedPrompt = `【参考图片】请参照用户上传的背景图风格和构图进行创作。${enhancedPrompt}`;
+      enhancedPrompt = `【参考图片】请参照用户上传的参考图风格和构图进行创作。${enhancedPrompt}`;
     }
 
     console.log('[Background] 原始提示词:', prompt);
