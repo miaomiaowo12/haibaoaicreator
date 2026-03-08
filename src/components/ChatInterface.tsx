@@ -224,7 +224,7 @@ export default function ChatInterface() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 180000); // 180秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 240000); // 240秒超时，适应手机慢网络
       
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -286,7 +286,7 @@ export default function ChatInterface() {
       let errorMsg = '未知错误';
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          errorMsg = '请求超时，请检查网络后重试';
+          errorMsg = '请求超时，网络较慢。请检查网络连接后重试';
         } else {
           errorMsg = error.message;
         }
@@ -591,14 +591,17 @@ export default function ChatInterface() {
             ))}
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
-                <div className="message-assistant rounded-2xl px-4 py-3 shadow-message">
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-600 text-sm">海报生成中，请耐心等待</span>
-                    <div className="flex items-center gap-1 h-4">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="message-assistant rounded-2xl px-4 py-3 shadow-message max-w-[90%]">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-600 text-sm">海报生成中，请耐心等待</span>
+                      <div className="flex items-center gap-1 h-4">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
                     </div>
+                    <span className="text-xs text-gray-400">预计需要 30-60 秒，网络较慢时可能更长</span>
                   </div>
                 </div>
               </div>
