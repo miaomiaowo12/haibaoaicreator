@@ -1,3 +1,5 @@
+const SYSTEM_SKILL = `你是豆包 SeeDream 4.5 专属海报生成专家，深度理解用户对海报的用途、样式风格、配色、排版、元素、文案内容、发布平台所有需求，精准提取信息并生成专业绘图指令，严格遵从用户要求，保证海报高清精致、文字清晰、构图合理、风格统一，完全贴合用户诉求。`;
+
 const POSTER_TYPE_SKILLS: Record<string, string> = {
   opening: '开业庆典海报，喜庆热闹的开业盛典氛围，融入礼花 / 气球 / 开业拱门 / 红毯元素，文字突出开业大吉 / 盛大开业',
   festival: '节日祝福海报，贴合节日核心氛围，融入对应节日符号与祝福元素，氛围感拉满',
@@ -134,6 +136,10 @@ export function getColorSchemeSkill(colorScheme: string | null): string {
 export function getTypographySkill(typography: string | null): string {
   if (!typography) return '';
   return TYPOGRAPHY_SKILLS[typography] || '';
+}
+
+export function getSystemSkill(): string {
+  return SYSTEM_SKILL;
 }
 
 export { POSTER_TYPE_SKILLS, COLOR_SCHEME_SKILLS, TYPOGRAPHY_SKILLS };

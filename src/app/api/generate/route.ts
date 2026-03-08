@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   getPosterTypeSkill,
   getColorSchemeSkill,
-  getTypographySkill
+  getTypographySkill,
+  getSystemSkill
 } from '@/lib/promptEnhancer';
 import { recommendColorScheme } from '@/lib/designTemplates';
 
@@ -59,6 +60,9 @@ export async function POST(request: NextRequest) {
     promptParts.push(`高清 ${resolutionText} 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁`);
 
     let enhancedPrompt = promptParts.join('；');
+
+    const systemSkill = getSystemSkill();
+    enhancedPrompt = `${systemSkill}。${enhancedPrompt}`;
 
     if (contextSummary) {
       enhancedPrompt = `【对话上下文】${contextSummary}【当前需求】${enhancedPrompt}`;
