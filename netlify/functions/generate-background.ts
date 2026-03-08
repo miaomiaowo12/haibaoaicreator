@@ -96,7 +96,21 @@ export default async (req: Request, context: Context) => {
       enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
     }
 
-    // Build request body
+    if (!posterType && !finalColorScheme && !typography) {
+      enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象';
+    }
+
+    const textMatch = prompt.match(/[""「」『』【】]([^""「」『』【】]+)[""「」『』【】]/);
+    if (textMatch) {
+      enhancedPrompt += `。用户明确要求的文字内容："${textMatch[1]}"，仅显示此文字，不添加其他任何文字`;
+    }
+
+    enhancedPrompt += '。【严格规则】1.文字内容：海报中只能出现用户明确要求展示的文字内容，禁止添加任何用户未提及的文字；2.禁止出现：平台名称（抖音、小红书、微信等）、设计说明（海报设计、爆款、新品等）、随机数字、日期时间地点（除非用户提供）、水印签名、装饰性字母、无关符号；3.文字质量：所有文字必须清晰可读，字体大小适中（标题字号大、正文字号适中），边缘锐利无模糊，印刷级清晰度，无锯齿无毛边，字体端正不倾斜不变形；4.文字排版：文字对齐整齐，间距合理，层级分明，标题醒目，正文清晰，整体协调美观；5.纯净画面：画面干净整洁，无多余装饰文字，无乱码，无模糊字符，无不可识别的符号';
+
+    console.log('[Background] 原始提示词:', prompt);
+    console.log('[Background] 增强后提示词:', enhancedPrompt.substring(0, 200) + '...');
+
+    // Build request body AFTER all prompt enhancements
     const requestBody: Record<string, unknown> = {
       model: 'doubao-seedream-4-5-251128',
       prompt: enhancedPrompt,
