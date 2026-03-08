@@ -107,7 +107,10 @@ export async function POST(request: NextRequest) {
     if (selectedImage) {
       requestBody.image = selectedImage;
     } else if (backgroundImage) {
-      if (backgroundImage.startsWith('data:image/')) {
+      if (backgroundImage.startsWith('http')) {
+        requestBody.image = backgroundImage;
+        console.log('使用 TOS 图片 URL:', backgroundImage);
+      } else if (backgroundImage.startsWith('data:image/')) {
         const matches = backgroundImage.match(/^data:image\/(\w+);base64,(.+)$/);
         if (matches) {
           const base64Data = matches[2];
@@ -122,9 +125,6 @@ export async function POST(request: NextRequest) {
           }
           requestBody.image = backgroundImage;
         }
-      } else if (backgroundImage.startsWith('http')) {
-        requestBody.image = backgroundImage;
-        console.log('使用图片 URL:', backgroundImage);
       }
     }
 

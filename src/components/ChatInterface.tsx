@@ -140,18 +140,47 @@ export default function ChatInterface() {
     try {
       setIsUploadingImage(true);
       
-      const compressedDataUrl = await compressImage(dataUrl, 512, 0.4);
+      // 先压缩图片
+      const compressedDataUrl = await compressImage(dataUrl, 1024, 0.7);
       console.log('图片压缩完成，大小:', compressedDataUrl.length);
-      setBackgroundImage(compressedDataUrl);
+      
+      // 转换为 File 对象
+      const response = await fetch(compressedDataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `upload-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      // 上传到 TOS
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const uploadData = await uploadResponse.json();
+      console.log('上传响应:', uploadData);
+      
+      if (!uploadResponse.ok || uploadData.error) {
+        throw new Error(uploadData.details || uploadData.error || '上传失败');
+      }
+      
+      if (!uploadData.url) {
+        throw new Error('未返回图片 URL');
+      }
+      
+      console.log('图片已上传到 TOS:', uploadData.url);
+      setBackgroundImage(uploadData.url);
+      
     } catch (err) {
-      console.error('图片处理失败:', err);
-      alert('图片处理失败，请重试');
+      console.error('图片上传失败:', err);
+      alert(`图片上传失败：${err instanceof Error ? err.message : '请重试'}`);
     } finally {
       setIsUploadingImage(false);
     }
   };
 
-  const compressImage = (dataUrl: string, maxWidth: number = 512, quality: number = 0.4): Promise<string> => {
+  const compressImage = (dataUrl: string, maxWidth: number = 1024, quality: number = 0.7): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
