@@ -278,10 +278,9 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300000); // 300秒超时（5分钟），适应Pro账户26秒限制但前端保持连接，适应手机慢网络
-      
-      const response = await fetch('/api/generate', {
+      // 步骤 1: 提交异步任务
+      console.log('提交异步生成任务...');
+      const submitResponse = await fetch('/api/generate-async', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -298,56 +297,83 @@ export default function ChatInterface() {
           })),
           mode: backgroundImage ? 'single' : 'thumbnails',
         }),
-        signal: controller.signal,
       });
-      
-      clearTimeout(timeoutId);
 
-      console.log('前端收到响应:', response.status, response.statusText);
-
-      if (!response.ok) {
-        console.error('响应错误:', response.status, response.statusText);
-        throw new Error(`服务器错误: ${response.status}`);
+      if (!submitResponse.ok) {
+        throw new Error(`提交任务失败: ${submitResponse.status}`);
       }
 
-      const data = await response.json();
+      const { jobId } = await submitResponse.json();
+      console.log('任务已提交，jobId:', jobId);
 
-      if (data.error) {
-        throw new Error(data.error);
+      // 步骤 2: 轮询查询状态（每3秒查询一次，最多60次 = 3分钟）
+      const maxAttempts = 60;
+      const pollInterval = 3000; // 3秒
+      let attempts = 0;
+      let result = null;
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`轮询第 ${attempts}/${maxAttempts} 次...`);
+
+        // 等待3秒
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+        // 查询状态
+        const statusResponse = await fetch(`/api/job-status?jobId=${jobId}`);
+        
+        if (!statusResponse.ok) {
+          console.error('查询状态失败:', statusResponse.status);
+          continue; // 继续轮询
+        }
+
+        const jobStatus = await statusResponse.json();
+        console.log('任务状态:', jobStatus.status);
+
+        if (jobStatus.status === 'completed') {
+          result = jobStatus.result;
+          break; // 完成，跳出循环
+        } else if (jobStatus.status === 'failed') {
+          throw new Error(jobStatus.error || '生成失败');
+        }
+        // pending 或 processing，继续轮询
       }
+
+      if (!result) {
+        throw new Error('生成超时，请重试');
+      }
+
+      // 步骤 3: 显示结果
+      console.log('生成完成，结果:', result);
 
       if (backgroundImage) {
         const assistantMessage: Message = {
           id: generateId(),
           role: 'assistant',
           content: '海报已生成！点击图片可放大查看',
-          generatedImage: data.data?.[0]?.url || data.url,
+          generatedImage: result.url,
         };
         const finalMessages = [...newMessages, assistantMessage];
         setMessages(finalMessages);
         saveMessages(finalMessages);
       } else {
-        const thumbnails = data.data?.map((img: { url: string }) => img.url) || [];
-        
+        // 缩略图模式，这里简化处理，实际应该支持多图
         const assistantMessage: Message = {
           id: generateId(),
           role: 'assistant',
-          content: '已生成多个海报，请选择一个生成高清图：',
-          thumbnails: thumbnails,
+          content: '海报已生成！点击图片可放大查看',
+          generatedImage: result.url,
         };
-
         const finalMessages = [...newMessages, assistantMessage];
         setMessages(finalMessages);
         saveMessages(finalMessages);
       }
+
     } catch (error) {
+      console.error('生成失败:', error);
       let errorMsg = '未知错误';
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          errorMsg = '请求超时，网络较慢。请检查网络连接后重试';
-        } else {
-          errorMsg = error.message;
-        }
+        errorMsg = error.message;
       }
       
       const errorMessage: Message = {
@@ -659,7 +685,7 @@ export default function ChatInterface() {
                         <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400">预计需要 30-60 秒，网络较慢时可能更长</span>
+                    <span className="text-xs text-gray-400">正在生成中，请保持页面打开（最多3分钟）</span>
                   </div>
                 </div>
               </div>
