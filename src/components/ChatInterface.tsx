@@ -590,7 +590,7 @@ export default function ChatInterface() {
                 <div className="message-assistant rounded-2xl px-4 py-3 shadow-message">
                   <div className="flex items-center gap-3">
                     <span className="text-gray-600 text-sm">海报生成中，请耐心等待</span>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 h-4">
                       <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                       <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                       <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
