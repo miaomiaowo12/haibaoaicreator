@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TosClient } from '@volcengine/tos-sdk';
+import TosClient from '@volcengine/tos-sdk';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,12 +36,14 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    await client.putObject({
+    const result = await client.putObject({
       bucket: bucketName,
       key: fileName,
       body: buffer,
       contentType: file.type,
     });
+
+    console.log('TOS 上传结果:', result);
 
     const url = `https://${bucketName}.tos-${region}.volces.com/${fileName}`;
 
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('上传图片到 TOS 失败:', error);
     return NextResponse.json(
-      { error: '上传失败' },
+      { error: '上传失败', details: error instanceof Error ? error.message : '未知错误' },
       { status: 500 }
     );
   }
