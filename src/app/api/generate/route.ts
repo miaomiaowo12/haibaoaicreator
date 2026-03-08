@@ -13,6 +13,10 @@ interface ChatMessage {
   content: string;
 }
 
+// Edge Runtime 支持流式响应和更长超时
+export const runtime = 'edge';
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
