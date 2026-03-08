@@ -57,6 +57,7 @@ export default function ChatInterface() {
   const [showConversationList, setShowConversationList] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -420,6 +421,10 @@ export default function ChatInterface() {
     setMessages(emptyConv.messages);
     setBackgroundImage(null);
     setShowConversationList(false);
+    
+    setTimeout(() => {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleSelectConversation = (id: string) => {
@@ -429,6 +434,10 @@ export default function ChatInterface() {
       setMessages(conv.messages);
       setBackgroundImage(null);
       setShowConversationList(false);
+      
+      setTimeout(() => {
+        scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -549,27 +558,56 @@ export default function ChatInterface() {
                         {message.thumbnails.map((thumb, idx) => (
                           <button
                             key={idx}
-                            onClick={() => handleSelectThumbnail(thumb, messages.findIndex(m => m.id === message.id))}
-                            className="relative group rounded-lg overflow-hidden border-2 border-transparent hover:border-purple-500 transition-all"
+                            onClick={() => {
+                              setSelectedThumbnail(thumb);
+                              handleSelectThumbnail(thumb, messages.findIndex(m => m.id === message.id));
+                            }}
+                            className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
+                              selectedThumbnail === thumb 
+                                ? 'border-purple-600 ring-2 ring-purple-300' 
+                                : 'border-transparent hover:border-purple-400'
+                            }`}
                           >
                             <img
                               src={thumb}
                               alt={`方案 ${idx + 1}`}
                               className="w-full aspect-square object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium bg-purple-600 px-3 py-1.5 rounded">
-                                选择此方案
+                            <div className={`absolute inset-0 transition-colors flex items-center justify-center ${
+                              selectedThumbnail === thumb 
+                                ? 'bg-purple-600/30' 
+                                : 'bg-black/0 group-hover:bg-black/20'
+                            }`}>
+                              <span className={`text-sm font-medium px-3 py-1.5 rounded transition-all ${
+                                selectedThumbnail === thumb 
+                                  ? 'opacity-100 bg-purple-600 text-white' 
+                                  : 'opacity-0 group-hover:opacity-100 bg-purple-600 text-white'
+                              }`}>
+                                {selectedThumbnail === thumb ? '已选中' : '选择此方案'}
                               </span>
                             </div>
-                            <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                            <div className={`absolute top-2 left-2 text-xs px-2 py-1 rounded ${
+                              selectedThumbnail === thumb 
+                                ? 'bg-purple-600 text-white' 
+                                : 'bg-black/50 text-white'
+                            }`}>
                               方案 {idx + 1}
                             </div>
+                            {selectedThumbnail === thumb && (
+                              <div className="absolute top-2 right-2 bg-purple-600 text-white rounded-full p-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
                       <button
-                        onClick={() => handleRegenerateThumbnails(message.id)}
+                        onClick={() => {
+                          setSelectedThumbnail(null);
+                          handleRegenerateThumbnails(message.id);
+                        }}
                         className="mt-3 w-full py-2 text-sm text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors"
                       >
                         对所有方案都不满意？重新生成
