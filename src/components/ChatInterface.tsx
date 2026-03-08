@@ -58,6 +58,7 @@ export default function ChatInterface() {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [loadingThumbnail, setLoadingThumbnail] = useState<string | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<string>('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -305,6 +306,7 @@ export default function ChatInterface() {
 
       const { jobId } = await submitResponse.json();
       console.log('任务已提交，jobId:', jobId);
+      setLoadingStatus('任务已提交，正在启动生成...');
 
       // 步骤 2: 轮询查询状态（每3秒查询一次，最多60次 = 3分钟）
       const maxAttempts = 60;
@@ -314,6 +316,17 @@ export default function ChatInterface() {
 
       while (attempts < maxAttempts) {
         attempts++;
+        
+        // 更新进度显示
+        const elapsedSeconds = attempts * 3;
+        if (attempts <= 5) {
+          setLoadingStatus(`正在启动生成任务... (${elapsedSeconds}秒)`);
+        } else if (attempts <= 15) {
+          setLoadingStatus(`AI正在生成海报，请稍候... (${elapsedSeconds}秒)`);
+        } else {
+          setLoadingStatus(`正在优化海报细节... (${elapsedSeconds}秒)`);
+        }
+        
         console.log(`轮询第 ${attempts}/${maxAttempts} 次...`);
 
         // 等待3秒
@@ -678,7 +691,7 @@ export default function ChatInterface() {
                 <div className="message-assistant rounded-2xl px-4 py-3 shadow-message max-w-[90%]">
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-gray-600 text-sm">海报生成中，请耐心等待</span>
+                      <span className="text-gray-600 text-sm">{loadingStatus || '海报生成中，请耐心等待'}</span>
                       <div className="flex items-center gap-1 h-4">
                         <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                         <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>

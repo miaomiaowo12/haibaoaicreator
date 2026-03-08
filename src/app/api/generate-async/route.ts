@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getStore } from '@netlify/blobs';
 import { createJob } from '@/lib/jobQueue';
 
 export const runtime = 'edge';
@@ -26,23 +27,44 @@ export async function POST(request: NextRequest) {
     };
 
     // Get the base URL for the background function
-    const baseUrl = process.env.DEPLOY_URL || process.env.URL || request.headers.get('host') || '';
-    const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
-    const functionUrl = `${protocol}://${baseUrl}/.netlify/functions/generate-background`;
+    // Try various sources to get the correct host
+    const host = request.headers.get('host') || 
+                 request.headers.get('x-forwarded-host') ||
+                 process.env.DEPLOY_URL || 
+                 process.env.URL;
+    
+    if (!host) {
+      throw new Error('无法确定服务器地址');
+    }
+    
+    // Remove protocol if present in host
+    const cleanHost = host.replace(/^https?:\/\//, '');
+    const protocol = cleanHost.includes('localhost') ? 'http' : 'https';
+    const functionUrl = `${protocol}://${cleanHost}/.netlify/functions/generate-background`;
 
     console.log('Invoking background function:', functionUrl);
 
-    // Invoke background function (fire and forget - it will run independently)
-    // We don't await this - it runs in the background
-    fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(backgroundPayload),
-    }).catch(error => {
+    // Invoke background function - must await to catch errors
+    try {
+      const bgResponse = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(backgroundPayload),
+      });
+      console.log('Background function invoked, status:', bgResponse.status);
+    } catch (error) {
       console.error('Failed to invoke background function:', error);
-    });
+      // Update job status to reflect the failure
+      const store = getStore('job-queue');
+      await store.setJSON(jobId, {
+        status: 'failed',
+        error: '后台任务启动失败',
+        createdAt: Date.now(),
+      });
+      throw new Error('启动后台任务失败');
+    }
 
     // Immediately return jobId to client
     return NextResponse.json({

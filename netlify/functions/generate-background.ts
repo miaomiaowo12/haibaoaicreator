@@ -16,11 +16,22 @@ interface ChatMessage {
 
 // Background Function - can run up to 15 minutes
 export default async (req: Request, context: Context) => {
+  console.log('[Background] Function invoked', new Date().toISOString());
+  
   try {
     const body = await req.json();
     const { jobId, prompt, posterType, colorScheme, typography, messages, backgroundImage, mode, selectedImage } = body;
 
-    console.log(`[Background] Starting job ${jobId}`);
+    console.log(`[Background] Starting job ${jobId}`, { prompt: prompt?.substring(0, 50) });
+
+    // Validate jobId
+    if (!jobId) {
+      console.error('[Background] Missing jobId');
+      return new Response(JSON.stringify({ error: 'Missing jobId' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const store = getStore('job-queue');
     
@@ -29,9 +40,11 @@ export default async (req: Request, context: Context) => {
       status: 'processing',
       createdAt: Date.now(),
     });
+    console.log(`[Background] Job ${jobId}: Status updated to processing`);
 
     const apiKey = process.env.DOUBAO_API_KEY;
     if (!apiKey) {
+      console.error('[Background] API key not configured');
       await store.setJSON(jobId, {
         status: 'failed',
         error: 'API密钥未配置',
@@ -98,45 +111,69 @@ export default async (req: Request, context: Context) => {
     }
 
     console.log(`[Background] Job ${jobId}: Calling Doubao API...`);
-    console.log(`[Background] Job ${jobId}: Prompt: ${enhancedPrompt.substring(0, 100)}...`);
+    console.log(`[Background] Job ${jobId}: Prompt length: ${enhancedPrompt.length}`);
     
-    // Call Doubao API (this can take 30-40 seconds)
-    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const data = await response.json();
-    console.log(`[Background] Job ${jobId}: API response status ${response.status}`);
-
-    if (!response.ok) {
-      await store.setJSON(jobId, {
-        status: 'failed',
-        error: data.message || '图片生成失败',
-        createdAt: Date.now(),
+    // Call Doubao API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    
+    try {
+      const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
       });
-      return new Response(null, { status: 202 });
-    }
+      clearTimeout(timeoutId);
 
-    // Store successful result
-    await store.setJSON(jobId, {
-      status: 'completed',
-      result: {
+      const data = await response.json();
+      console.log(`[Background] Job ${jobId}: API response status ${response.status}`);
+
+      if (!response.ok) {
+        const errorMsg = data.message || data.error?.message || '图片生成失败';
+        console.error(`[Background] Job ${jobId}: API error:`, errorMsg);
+        await store.setJSON(jobId, {
+          status: 'failed',
+          error: errorMsg,
+          createdAt: Date.now(),
+        });
+        return new Response(null, { status: 202 });
+      }
+
+      // Store successful result
+      const result = {
         url: data.data?.[0]?.url,
         model: data.model,
         size: data.data?.[0]?.size,
-      },
-      createdAt: Date.now(),
-    });
+      };
+      
+      await store.setJSON(jobId, {
+        status: 'completed',
+        result,
+        createdAt: Date.now(),
+      });
 
-    console.log(`[Background] Job ${jobId}: Completed successfully`);
+      console.log(`[Background] Job ${jobId}: Completed successfully`, { url: result.url?.substring(0, 50) });
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error(`[Background] Job ${jobId}: API call timed out`);
+        await store.setJSON(jobId, {
+          status: 'failed',
+          error: 'API调用超时（60秒）',
+          createdAt: Date.now(),
+        });
+      } else {
+        throw fetchError;
+      }
+    }
     
   } catch (error) {
-    console.error('[Background] Error:', error);
+    console.error('[Background] Unexpected error:', error);
     // Try to update job status if we have a jobId
     try {
       const body = await req.clone().json();
