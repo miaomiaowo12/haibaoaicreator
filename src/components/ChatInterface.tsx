@@ -654,20 +654,20 @@ export default function ChatInterface() {
 
         <div className="input-area p-4 safe-area-bottom flex-shrink-0 shadow-input">
           {isUploadingImage && (
-            <div className="mb-3 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+            <div className="mb-3 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
               <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-              <span>图片上传完成才可以输入内容</span>
+              <span className="font-medium">图片上传中... 请等待显示"已上传背景图"后再发送</span>
             </div>
           )}
           
           {backgroundImage && !isUploadingImage && (
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-3 flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
               <img 
                 src={backgroundImage} 
                 alt="背景图预览" 
                 className="w-12 h-12 object-cover rounded border border-gray-200"
               />
-              <span className="text-sm text-gray-500">已上传背景图</span>
+              <span className="text-sm text-green-700 font-medium">✓ 已上传背景图，可以开始生成</span>
               <button
                 onClick={handleRemoveBackground}
                 className="text-red-500 hover:text-red-700 text-sm ml-auto"
