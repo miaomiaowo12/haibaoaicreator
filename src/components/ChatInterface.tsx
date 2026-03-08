@@ -605,7 +605,7 @@ export default function ChatInterface() {
           
           <MessageInput
             onSend={handleSendMessage}
-            disabled={isLoading || isUploadingImage}
+            disabled={isLoading}
             placeholder="告诉我你的海报需求，比如用途、文案、风格以及发布平台"
             onImageUpload={handleImageUpload}
           />

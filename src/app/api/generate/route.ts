@@ -3,7 +3,8 @@ import {
   getPosterTypeSkill,
   getColorSchemeSkill,
   getTypographySkill,
-  getSystemSkill
+  getSystemSkill,
+  getFestivalSkill
 } from '@/lib/promptEnhancer';
 import { recommendColorScheme } from '@/lib/designTemplates';
 
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
     }
 
     const promptParts: string[] = [];
+
+    promptParts.push(`用户需求：${prompt}`);
+
+    const festivalSkill = getFestivalSkill(prompt);
+    if (festivalSkill) {
+      promptParts.push(festivalSkill);
+    }
 
     const posterTypeSkill = getPosterTypeSkill(posterType);
     if (posterTypeSkill) {

@@ -1,4 +1,24 @@
-const SYSTEM_SKILL = `你是豆包 SeeDream 4.5 专属海报生成专家，深度理解用户对海报的用途、样式风格、配色、排版、元素、文案内容、发布平台所有需求，精准提取信息并生成专业绘图指令，严格遵从用户要求，保证海报高清精致、文字清晰、构图合理、风格统一，完全贴合用户诉求。`;
+const SYSTEM_SKILL = `你是豆包 SeeDream 4.5 专属海报生成专家，深度理解用户对海报的用途、样式风格、配色、排版、元素、文案内容、发布平台所有需求，精准提取信息并生成专业绘图指令，严格遵从用户要求，保证海报高清精致、文字清晰、构图合理、风格统一，完全贴合用户诉求。请特别注意：必须准确呈现用户描述中的具体主题（如节日名称、活动名称等），不得遗漏或替换用户明确提及的关键信息。`;
+
+const FESTIVAL_KEYWORDS: Record<string, string> = {
+  '三八妇女节': '三八妇女节主题，融入女性元素、鲜花、爱心、女性力量符号',
+  '妇女节': '三八妇女节主题，融入女性元素、鲜花、爱心、女性力量符号',
+  '春节': '春节主题，融入中国红、灯笼、福字、鞭炮、舞狮等传统元素',
+  '新年': '新年主题，融入烟花、倒计时、新年祝福元素',
+  '元宵节': '元宵节主题，融入灯笼、汤圆、猜灯谜元素',
+  '情人节': '情人节主题，融入爱心、玫瑰、巧克力、浪漫元素',
+  '清明节': '清明节主题，融入踏青、风筝、柳枝元素',
+  '劳动节': '劳动节主题，融入劳动者、工具、奋斗元素',
+  '端午节': '端午节主题，融入粽子、龙舟、艾草元素',
+  '中秋节': '中秋节主题，融入月亮、月饼、团圆元素',
+  '国庆节': '国庆节主题，融入国旗、天安门、烟花元素',
+  '圣诞节': '圣诞节主题，融入圣诞树、雪人、礼物、铃铛元素',
+  '母亲节': '母亲节主题，融入康乃馨、母爱、感恩元素',
+  '父亲节': '父亲节主题，融入父爱、感恩、家庭元素',
+  '儿童节': '儿童节主题，融入童趣、气球、礼物、欢乐元素',
+  '教师节': '教师节主题，融入书本、鲜花、感恩元素',
+  '双十一': '双十一主题，融入购物、促销、狂欢元素',
+};
 
 const POSTER_TYPE_SKILLS: Record<string, string> = {
   opening: '开业庆典海报，喜庆热闹的开业盛典氛围，融入礼花 / 气球 / 开业拱门 / 红毯元素，文字突出开业大吉 / 盛大开业',
@@ -136,6 +156,15 @@ export function getColorSchemeSkill(colorScheme: string | null): string {
 export function getTypographySkill(typography: string | null): string {
   if (!typography) return '';
   return TYPOGRAPHY_SKILLS[typography] || '';
+}
+
+export function getFestivalSkill(input: string): string | null {
+  for (const [keyword, skill] of Object.entries(FESTIVAL_KEYWORDS)) {
+    if (input.includes(keyword)) {
+      return skill;
+    }
+  }
+  return null;
 }
 
 export function getSystemSkill(): string {
