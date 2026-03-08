@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import MessageInput from './MessageInput';
 import PosterTypeSelector from './PosterTypeSelector';
-import DesignOptions from './DesignOptions';
+import StyleSelector from './StyleSelector';
 import ImageViewer from './ImageViewer';
 import ConversationList from './ConversationList';
 import { 
@@ -32,6 +32,29 @@ const POSTER_TYPES = [
   { id: 'other', label: '其他', emoji: '🎨' },
 ];
 
+const POSTER_STYLES = [
+  { id: 'modern', label: '现代简约' },
+  { id: 'minimalist', label: '极简主义' },
+  { id: 'business', label: '商务正式' },
+  { id: 'luxury', label: '高端奢华' },
+  { id: 'guochao', label: '国潮新中式' },
+  { id: 'chinese', label: '经典中国风' },
+  { id: 'ink', label: '水墨写意' },
+  { id: 'tech', label: '科技未来' },
+  { id: 'cyberpunk', label: '赛博朋克' },
+  { id: 'retro', label: '复古怀旧' },
+  { id: 'hongkong', label: '港式复古' },
+  { id: 'fresh', label: '清新治愈' },
+  { id: 'ins', label: '文艺 ins 风' },
+  { id: 'japanese', label: '日系清新' },
+  { id: 'korean', label: '韩系温柔' },
+  { id: 'cute', label: '可爱萌趣' },
+  { id: 'anime', label: '卡通动漫' },
+  { id: 'doodle', label: '手绘涂鸦' },
+  { id: 'festive', label: '喜庆热闹' },
+  { id: 'foodstyle', label: '美食质感' },
+];
+
 let messageIdCounter = 0;
 
 function generateId(): string {
@@ -50,9 +73,8 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedColorScheme, setSelectedColorScheme] = useState<string | null>(null);
-  const [selectedTypography, setSelectedTypography] = useState<string | null>(null);
-  const [showDesignOptions, setShowDesignOptions] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [showStyleSelector, setShowStyleSelector] = useState(false);
   const [viewerImage, setViewerImage] = useState<string | null>(null);
   const [showConversationList, setShowConversationList] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
@@ -289,8 +311,7 @@ export default function ChatInterface() {
         body: JSON.stringify({
           prompt: content,
           posterType: selectedType,
-          colorScheme: selectedColorScheme,
-          typography: selectedTypography,
+          style: selectedStyle,
           backgroundImage: backgroundImage,
           messages: messages.map(m => ({
             role: m.role,
@@ -446,8 +467,7 @@ export default function ChatInterface() {
         body: JSON.stringify({
           prompt: userMessage.content.replace('（已上传背景图）', ''),
           posterType: selectedType,
-          colorScheme: selectedColorScheme,
-          typography: selectedTypography,
+          style: selectedStyle,
           messages: messages.slice(0, messageIndex).map(m => ({
             role: m.role,
             content: m.content,
@@ -584,20 +604,19 @@ export default function ChatInterface() {
               onSelect={setSelectedType}
             />
             <button
-              onClick={() => setShowDesignOptions(!showDesignOptions)}
+              onClick={() => setShowStyleSelector(!showStyleSelector)}
               className="mt-3 text-sm text-purple-600 font-medium"
             >
-              {showDesignOptions ? '收起配色与排版 ▲' : '展开配色与排版 ▼'}
+              {showStyleSelector ? '收起风格选择 ▲' : '展开风格选择 ▼'}
             </button>
           </div>
 
-          {showDesignOptions && (
+          {showStyleSelector && (
             <div className="mx-4 mt-2">
-              <DesignOptions
-                selectedColorScheme={selectedColorScheme}
-                selectedTypography={selectedTypography}
-                onColorSchemeChange={setSelectedColorScheme}
-                onTypographyChange={setSelectedTypography}
+              <StyleSelector
+                styles={POSTER_STYLES}
+                selectedStyle={selectedStyle}
+                onSelect={setSelectedStyle}
               />
             </div>
           )}

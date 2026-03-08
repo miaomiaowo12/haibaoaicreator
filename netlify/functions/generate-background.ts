@@ -2,12 +2,10 @@ import type { Context, Config } from "@netlify/functions";
 import { getStore } from '@netlify/blobs';
 import { 
   getPosterTypeSkill,
-  getColorSchemeSkill,
-  getTypographySkill,
+  getStyleSkill,
   getSystemSkill,
   getFestivalSkill
 } from '../../src/lib/promptEnhancer';
-import { recommendColorScheme } from '../../src/lib/designTemplates';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -20,7 +18,7 @@ export default async (req: Request, context: Context) => {
   
   try {
     const body = await req.json();
-    const { jobId, prompt, posterType, colorScheme, typography, messages, backgroundImage, mode, selectedImage } = body;
+    const { jobId, prompt, posterType, style, messages, backgroundImage, mode, selectedImage } = body;
 
     console.log(`[Background] Starting job ${jobId}`, { prompt: prompt?.substring(0, 50) });
 
@@ -54,8 +52,6 @@ export default async (req: Request, context: Context) => {
     }
 
     // Build prompt using the same logic as the original
-    const finalColorScheme = colorScheme || (posterType ? recommendColorScheme(posterType) : null);
-
     let contextSummary = '';
     if (messages && messages.length > 1) {
       const recentMessages = messages.slice(-10);
@@ -73,11 +69,8 @@ export default async (req: Request, context: Context) => {
     const posterTypeSkill = getPosterTypeSkill(posterType);
     if (posterTypeSkill) promptParts.push(posterTypeSkill);
 
-    const colorSchemeSkill = getColorSchemeSkill(finalColorScheme);
-    if (colorSchemeSkill) promptParts.push(colorSchemeSkill);
-
-    const typographySkill = getTypographySkill(typography);
-    if (typographySkill) promptParts.push(typographySkill);
+    const styleSkill = getStyleSkill(style);
+    if (styleSkill) promptParts.push(styleSkill);
 
     const hasImage = !!backgroundImage || !!selectedImage;
     const size = hasImage ? '2048x2048' : '2K';
@@ -96,7 +89,7 @@ export default async (req: Request, context: Context) => {
       enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
     }
 
-    if (!posterType && !finalColorScheme && !typography) {
+    if (!posterType && !style) {
       enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，采用色彩鲜艳明亮、温暖亲切友好的风格，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象，传递积极正面的情感';
     }
 

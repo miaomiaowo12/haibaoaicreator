@@ -1,4 +1,4 @@
-const SYSTEM_SKILL = `你是豆包 SeeDream 4.5 专属海报生成专家，深度理解用户对海报的用途、样式风格、配色、排版、元素、文案内容、发布平台所有需求，精准提取信息并生成专业绘图指令，严格遵从用户要求，保证海报高清精致、文字清晰、构图合理、风格统一，完全贴合用户诉求。请特别注意：必须准确呈现用户描述中的具体主题（如节日名称、活动名称等），不得遗漏或替换用户明确提及的关键信息。`;
+const SYSTEM_SKILL = `你是豆包 SeeDream 4.5 专属海报生成专家，深度理解用户对海报的用途、样式风格、文案内容、发布平台所有需求，精准提取信息并生成专业绘图指令，严格遵从用户要求，保证海报高清精致、文字清晰、构图合理、风格统一，完全贴合用户诉求。请特别注意：必须准确呈现用户描述中的具体主题（如节日名称、活动名称等），不得遗漏或替换用户明确提及的关键信息。`;
 
 const FESTIVAL_KEYWORDS: Record<string, string> = {
   '三八妇女节': '三八妇女节主题，融入女性元素、鲜花、爱心、女性力量符号',
@@ -32,130 +32,38 @@ const POSTER_TYPE_SKILLS: Record<string, string> = {
   other: '通用创意海报，视觉美观协调，元素贴合主题，构图合理，色彩和谐，细节丰富',
 };
 
-const COLOR_SCHEME_SKILLS: Record<string, string> = {
-  warm: '暖色调（红 / 橙 / 黄 / 暖粉为主），温暖柔和，温馨热情',
-  cool: '冷色调（蓝 / 青 / 绿 / 紫为主），清冷高级，冷静科技',
-  monochrome: '单色系（单一主色搭配深浅渐变），极简高级，干净整洁',
-  complementary: '互补色（色环互补色搭配），对比强烈，视觉冲击',
-  analogous: '邻近色（相邻色系自然过渡），柔和协调，顺滑舒适',
-  triadic: '三色配色（三等分色环三色搭配），丰富活泼，均衡有活力',
-  chinese: '中国风（中国红 / 朱砂 / 墨黑 / 青花蓝 / 琉璃黄），古典雅致，国风韵味',
-  luxury: '奢华金（鎏金 / 香槟金搭配黑金 / 白金），金属珠光质感，高贵典雅',
+// 20种海报风格 Skills
+const STYLE_SKILLS: Record<string, string> = {
+  modern: '现代简约风格，简洁干净，构图清爽，线条利落，配色柔和高级，重点突出，留白舒适，商业质感强',
+  minimalist: '极简主义风格，极度简洁，少元素、大留白，单色或低对比配色，高级克制，视觉干净大气',
+  business: '商务正式风格，专业稳重，排版规整，配色沉稳大气，适合企业、招聘、会议、官方宣传',
+  luxury: '高端奢华风格，精致质感，鎏金、金属光感，典雅高贵，光影细腻，适合品牌、美妆、珠宝、高端活动',
+  guochao: '国潮新中式风格，传统元素与现代设计结合，醒目潮流，色彩鲜明，文化感强，适合节日、国潮品牌',
+  chinese: '经典中国风风格，传统中式美学，水墨、祥云、折扇、花鸟，雅致大气，国风韵味浓郁',
+  ink: '水墨写意风格，中国水墨笔触，意境悠远，留白雅致，淡彩晕染，文艺高级',
+  tech: '科技未来风格，未来感线条，光效、粒子、赛博光影，蓝色冷色调，适合科技、数码、发布会',
+  cyberpunk: '赛博朋克风格，霓虹光效，高对比撞色，未来都市街头感，炫酷吸睛',
+  retro: '复古怀旧风格，复古色调，老照片质感，经典元素，温暖有年代氛围',
+  hongkong: '港式复古风格，港风电影色调，复古胶片质感，复古字体氛围，复古街景氛围',
+  fresh: '清新治愈风格，明亮柔和，浅色系，自然舒服，适合生活、美妆、文创、轻食',
+  ins: '文艺 ins 风风格，简约文艺，低饱和配色，构图精致，适合小红书、公众号、文创',
+  japanese: '日系清新风格，柔和干净，浅色调，自然治愈，简约温柔',
+  korean: '韩系温柔风格，马卡龙浅色系，柔美浪漫，精致细腻，适合美妆、服饰、婚庆',
+  cute: '可爱萌趣风格，卡通圆润，色彩明亮，活泼可爱，适合儿童、亲子、甜品、文创',
+  anime: '卡通动漫风格，二次元插画质感，线条流畅，色彩鲜艳，角色醒目',
+  doodle: '手绘涂鸦风格，随性手绘质感，线条自由，艺术感强，年轻潮流',
+  festive: '喜庆热闹风格，红色为主，节日氛围浓，礼花、灯笼、福字元素，适合开业、节日、促销',
+  foodstyle: '美食质感风格，色彩诱人，光影温润，食材新鲜，食欲感强，高清写实质感',
 };
-
-const TYPOGRAPHY_SKILLS: Record<string, string> = {
-  hierarchy: '排版层级分明，标题 / 副标题 / 详情文字大小对比合理，视觉流程顺滑',
-  contrast: '排版对比突出，图文 / 色彩 / 大小形成强烈对比，核心信息极度突出',
-  balance: '排版视觉平衡，左右 / 上下视觉重量均衡，元素分布对称协调',
-  emphasis: '排版重点强调，核心主体 / 文案居中放大，视觉重心聚焦',
-  whitespace: '排版留白呼吸，保留充足空白区域，视觉透气舒适，简约高级',
-  alignment: '排版对齐整齐，文字 / 元素严格统一对齐，规整有序',
-};
-
-const STYLE_KEYWORDS: Record<string, string> = {
-  '现代': '现代简约风格',
-  '简约': '现代简约风格',
-  '极简': '极简主义风格',
-  '复古': '复古怀旧风格',
-  '怀旧': '复古怀旧风格',
-  '奢华': '高端奢华风格',
-  '高端': '高端奢华风格',
-  '趣味': '活泼趣味风格',
-  '活泼': '活泼趣味风格',
-  '优雅': '优雅精致风格',
-  '精致': '优雅精致风格',
-  '科技': '科技未来风格',
-  '未来': '科技未来风格',
-  '中国风': '中国风风格',
-  '国风': '中国风风格',
-  '古典': '古典雅致风格',
-  '清新': '清新治愈风格',
-  '治愈': '清新治愈风格',
-  '可爱': '可爱萌趣风格',
-  '萌': '可爱萌趣风格',
-};
-
-const PLATFORM_KEYWORDS: Record<string, string> = {
-  '小红书': 'xiaohongshu',
-  '红书': 'xiaohongshu',
-  '抖音': 'douyin',
-  '朋友圈': 'pengyouquan',
-  '视频号': 'shipinhao',
-  '微博': 'weibo',
-  '印刷': 'poster',
-  '打印': 'poster',
-  '网页': 'web',
-  '网站': 'web',
-  '横幅': 'web',
-};
-
-export function enhancePrompt(
-  userInput: string,
-  posterType: string | null,
-  style: string | null = null,
-  platform: string | null = null
-): string {
-  const parts: string[] = [];
-
-  const platformSkills: Record<string, string> = {
-    xiaohongshu: '清新治愈温柔氛围感，浅色系高级配色，柔和柔光，极简ins风，干净通透，居中构图，舒适留白，精致排版，文字大小适中清晰，8K超高清，极致细节，画质细腻，无噪点无瑕疵，masterpiece, best quality, ultra-detailed',
-    douyin: '高对比强冲击力，潮流时尚年轻活力，动感光影，鲜明高级配色，居中紧凑构图，主体突出，文字大小适中清晰，8K超高清，极致细节，画质清晰，无噪点无瑕疵，masterpiece, best quality, ultra-detailed',
-    shipinhao: '简约大气，视觉舒适耐看，居中构图，干净留白，柔和光影，配色高级协调，文字大小适中清晰醒目，氛围感强，8K超高清，极致细节，画质细腻，无噪点无瑕疵，masterpiece, best quality, ultra-detailed',
-    pengyouquan: '简约大气低调质感，中性柔和色调，干净整洁，舒适氛围感，居中对称构图，精致不花哨，文字大小适中清晰，8K超高清，极致细节，画质细腻，无噪点无瑕疵，masterpiece, best quality, ultra-detailed',
-  };
-
-  const generalSkill = '极简大气，居中对称构图，干净舒适留白，精致排版布局，文字大小适中清晰醒目、字体高级、排版工整，光影柔和通透，配色高级协调，整体干净整洁，细节精致，无噪点无瑕疵，8K超高清，masterpiece, best quality, ultra-detailed';
-
-  if (posterType && POSTER_TYPE_SKILLS[posterType]) {
-    parts.push(POSTER_TYPE_SKILLS[posterType]);
-  }
-
-  if (platform && platformSkills[platform]) {
-    parts.push(platformSkills[platform]);
-  } else {
-    parts.push(generalSkill);
-  }
-
-  if (style) {
-    parts.push(style);
-  }
-
-  parts.push(userInput);
-
-  return parts.join('，');
-}
-
-export function extractStyleFromInput(input: string): string | null {
-  for (const [keyword, style] of Object.entries(STYLE_KEYWORDS)) {
-    if (input.includes(keyword)) {
-      return style;
-    }
-  }
-  return null;
-}
-
-export function extractPlatformFromInput(input: string): string | null {
-  for (const [keyword, platform] of Object.entries(PLATFORM_KEYWORDS)) {
-    if (input.includes(keyword)) {
-      return platform;
-    }
-  }
-  return null;
-}
 
 export function getPosterTypeSkill(posterType: string | null): string {
   if (!posterType) return '';
   return POSTER_TYPE_SKILLS[posterType] || '';
 }
 
-export function getColorSchemeSkill(colorScheme: string | null): string {
-  if (!colorScheme) return '';
-  return COLOR_SCHEME_SKILLS[colorScheme] || '';
-}
-
-export function getTypographySkill(typography: string | null): string {
-  if (!typography) return '';
-  return TYPOGRAPHY_SKILLS[typography] || '';
+export function getStyleSkill(style: string | null): string {
+  if (!style) return '';
+  return STYLE_SKILLS[style] || '';
 }
 
 export function getFestivalSkill(input: string): string | null {
@@ -171,4 +79,4 @@ export function getSystemSkill(): string {
   return SYSTEM_SKILL;
 }
 
-export { POSTER_TYPE_SKILLS, COLOR_SCHEME_SKILLS, TYPOGRAPHY_SKILLS };
+export { POSTER_TYPE_SKILLS, STYLE_SKILLS, FESTIVAL_KEYWORDS };

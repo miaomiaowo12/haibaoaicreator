@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   getPosterTypeSkill,
-  getColorSchemeSkill,
-  getTypographySkill,
+  getStyleSkill,
   getSystemSkill,
   getFestivalSkill
 } from '@/lib/promptEnhancer';
-import { recommendColorScheme } from '@/lib/designTemplates';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -20,7 +18,7 @@ export const maxDuration = 300;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, posterType, colorScheme, typography, messages, backgroundImage, mode, selectedImage } = body;
+    const { prompt, posterType, style, messages, backgroundImage, mode, selectedImage } = body;
 
     const apiKey = process.env.DOUBAO_API_KEY;
 
@@ -30,8 +28,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    const finalColorScheme = colorScheme || (posterType ? recommendColorScheme(posterType) : null);
 
     let contextSummary = '';
     if (messages && messages.length > 1) {
@@ -55,14 +51,9 @@ export async function POST(request: NextRequest) {
       promptParts.push(posterTypeSkill);
     }
 
-    const colorSchemeSkill = getColorSchemeSkill(finalColorScheme);
-    if (colorSchemeSkill) {
-      promptParts.push(colorSchemeSkill);
-    }
-
-    const typographySkill = getTypographySkill(typography);
-    if (typographySkill) {
-      promptParts.push(typographySkill);
+    const styleSkill = getStyleSkill(style);
+    if (styleSkill) {
+      promptParts.push(styleSkill);
     }
 
     const isThumbnailMode = mode === 'thumbnails' && !backgroundImage && !selectedImage;
@@ -86,7 +77,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!posterType && !finalColorScheme && !typography) {
+    if (!posterType && !style) {
       enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，采用色彩鲜艳明亮、温暖亲切友好的风格，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象，传递积极正面的情感';
     }
 
