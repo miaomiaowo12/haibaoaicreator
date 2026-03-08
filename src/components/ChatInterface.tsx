@@ -613,7 +613,7 @@ export default function ChatInterface() {
                 onClick={() => setShowStyleSelector(!showStyleSelector)}
                 className="text-sm text-purple-600 font-medium flex items-center gap-1"
               >
-                {showStyleSelector ? '收起 ▲' : '展开风格选择 ▼'}
+                {showStyleSelector ? '收起 ▲' : '展开选择海报风格 ▼'}
               </button>
               
               {showStyleSelector && (
