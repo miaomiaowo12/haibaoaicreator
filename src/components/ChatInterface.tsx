@@ -29,6 +29,10 @@ const POSTER_TYPES = [
   { id: 'travel', label: '旅游出行', emoji: '✈️' },
   { id: 'wedding', label: '婚庆喜事', emoji: '💒' },
   { id: 'education', label: '教育培训', emoji: '📚' },
+  { id: 'medical', label: '医疗健康', emoji: '🏥' },
+  { id: 'finance', label: '金融理财', emoji: '💰' },
+  { id: 'technology', label: '科技数码', emoji: '💻' },
+  { id: 'beauty', label: '美妆护肤', emoji: '💄' },
   { id: 'other', label: '其他', emoji: '🎨' },
 ];
 
