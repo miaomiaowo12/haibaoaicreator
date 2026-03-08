@@ -223,6 +223,9 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒超时
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -240,7 +243,10 @@ export default function ChatInterface() {
           })),
           mode: backgroundImage ? 'single' : 'thumbnails',
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -273,10 +279,19 @@ export default function ChatInterface() {
         saveMessages(finalMessages);
       }
     } catch (error) {
+      let errorMsg = '未知错误';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMsg = '请求超时，请重试';
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      
       const errorMessage: Message = {
         id: generateId(),
         role: 'assistant',
-        content: `生成失败：${error instanceof Error ? error.message : '未知错误'}`,
+        content: `生成失败：${errorMsg}`,
       };
       const finalMessages = [...newMessages, errorMessage];
       setMessages(finalMessages);
