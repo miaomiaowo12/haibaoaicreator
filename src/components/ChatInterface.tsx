@@ -224,7 +224,7 @@ export default function ChatInterface() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // 180秒超时
       
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -247,6 +247,10 @@ export default function ChatInterface() {
       });
       
       clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`服务器错误: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -282,7 +286,7 @@ export default function ChatInterface() {
       let errorMsg = '未知错误';
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          errorMsg = '请求超时，请重试';
+          errorMsg = '请求超时，请检查网络后重试';
         } else {
           errorMsg = error.message;
         }
