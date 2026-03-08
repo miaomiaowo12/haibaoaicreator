@@ -82,7 +82,7 @@ export default async (req: Request, context: Context) => {
     const hasImage = !!backgroundImage || !!selectedImage;
     const size = hasImage ? '2048x2048' : '2K';
     
-    promptParts.push(`高清 2048×2048 分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁`);
+    promptParts.push(`高清分辨率，商业级质感，文字清晰可辨，光影精致，主体突出，背景简洁`);
 
     let enhancedPrompt = promptParts.join('；');
     const systemSkill = getSystemSkill();
