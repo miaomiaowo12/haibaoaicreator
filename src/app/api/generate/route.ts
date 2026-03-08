@@ -107,15 +107,24 @@ export async function POST(request: NextRequest) {
     if (selectedImage) {
       requestBody.image = selectedImage;
     } else if (backgroundImage) {
-      if (backgroundImage.startsWith('http')) {
+      if (backgroundImage.startsWith('data:image/')) {
+        const matches = backgroundImage.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          const base64Data = matches[2];
+          console.log('使用 base64 图片，长度:', base64Data.length);
+          
+          if (base64Data.length > 544000) {
+            console.log('图片太大，不发送');
+            return NextResponse.json(
+              { error: '图片过大，请上传小于 400KB 的图片' },
+              { status: 400 }
+            );
+          }
+          requestBody.image = backgroundImage;
+        }
+      } else if (backgroundImage.startsWith('http')) {
         requestBody.image = backgroundImage;
-        console.log('使用 TOS 图片 URL:', backgroundImage);
-      } else {
-        console.error('无效的背景图 URL:', backgroundImage.substring(0, 100));
-        return NextResponse.json(
-          { error: '背景图 URL 无效，请重新上传' },
-          { status: 400 }
-        );
+        console.log('使用图片 URL:', backgroundImage);
       }
     }
 

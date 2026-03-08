@@ -139,36 +139,45 @@ export default function ChatInterface() {
   const handleImageUpload = async (dataUrl: string) => {
     try {
       setIsUploadingImage(true);
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], 'background.jpg', { type: blob.type });
       
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const uploadData = await uploadResponse.json();
-      
-      if (uploadData.error) {
-        throw new Error(uploadData.details || uploadData.error);
-      }
-      
-      if (!uploadData.url || !uploadData.url.startsWith('http')) {
-        throw new Error('上传返回的 URL 无效');
-      }
-      
-      console.log('图片已上传到 TOS:', uploadData.url);
-      setBackgroundImage(uploadData.url);
+      const compressedDataUrl = await compressImage(dataUrl, 512, 0.4);
+      console.log('图片压缩完成，大小:', compressedDataUrl.length);
+      setBackgroundImage(compressedDataUrl);
     } catch (err) {
-      console.error('图片上传失败:', err);
-      alert(`图片上传失败：${err instanceof Error ? err.message : '请重试'}`);
+      console.error('图片处理失败:', err);
+      alert('图片处理失败，请重试');
     } finally {
       setIsUploadingImage(false);
     }
+  };
+
+  const compressImage = (dataUrl: string, maxWidth: number = 512, quality: number = 0.4): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        } else {
+          resolve(dataUrl);
+        }
+      };
+      img.src = dataUrl;
+    });
   };
 
   const handleSendMessage = async (content: string) => {
