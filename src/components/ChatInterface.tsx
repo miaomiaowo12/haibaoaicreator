@@ -171,35 +171,35 @@ export default function ChatInterface() {
     try {
       setIsUploadingImage(true);
       
-      // 第一次压缩：400px, 0.35质量
-      const compressedDataUrl = await compressImage(dataUrl, 400, 0.35);
+      // 适中压缩：800px, 0.7质量，保持较好画质
+      const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
       console.log('图片压缩完成，大小:', compressedDataUrl.length);
       
       // 转换为 File 对象
       const response = await fetch(compressedDataUrl);
       let blob = await response.blob();
       
-      // 如果还太大（>40KB），再次压缩到 256px
-      if (blob.size > 40 * 1024) {
-        console.log('文件仍较大，再次压缩到 256px...');
-        const aggressiveCompressed = await compressImage(dataUrl, 256, 0.3);
-        const aggressiveResponse = await fetch(aggressiveCompressed);
-        blob = await aggressiveResponse.blob();
+      // 如果还太大（>300KB），再次压缩到 600px, 0.6质量
+      if (blob.size > 300 * 1024) {
+        console.log('文件较大，再次压缩到 600px...');
+        const mediumCompressed = await compressImage(dataUrl, 600, 0.6);
+        const mediumResponse = await fetch(mediumCompressed);
+        blob = await mediumResponse.blob();
         console.log('二次压缩后大小:', blob.size);
         
-        // 如果还太大（>30KB），最后一次压缩到 192px
-        if (blob.size > 30 * 1024) {
-          console.log('文件还太大，最终压缩到 192px...');
-          const finalCompressed = await compressImage(dataUrl, 192, 0.25);
+        // 如果还太大（>200KB），最后压缩到 512px, 0.5质量
+        if (blob.size > 200 * 1024) {
+          console.log('文件仍大，最终压缩到 512px...');
+          const finalCompressed = await compressImage(dataUrl, 512, 0.5);
           const finalResponse = await fetch(finalCompressed);
           blob = await finalResponse.blob();
           console.log('最终压缩后大小:', blob.size);
         }
       }
       
-      // 警告用户如果图片还太大
-      if (blob.size > 50 * 1024) {
-        alert('图片文件较大，生成可能需要更长时间。建议上传更小的图片。');
+      // 如果图片还很大，提示用户
+      if (blob.size > 400 * 1024) {
+        alert('图片较大，上传可能需要较长时间。建议上传较小的图片以获得更快体验。');
       }
       
       const file = new File([blob], `upload-${Date.now()}.jpg`, { type: 'image/jpeg' });
