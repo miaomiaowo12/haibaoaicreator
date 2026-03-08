@@ -171,14 +171,25 @@ export default function ChatInterface() {
     try {
       setIsUploadingImage(true);
       
-      // 先压缩图片
-      const compressedDataUrl = await compressImage(dataUrl, 1024, 0.7);
+      // 先压缩图片（512px, 0.5质量，文件控制在150KB以内）
+      const compressedDataUrl = await compressImage(dataUrl, 512, 0.5);
       console.log('图片压缩完成，大小:', compressedDataUrl.length);
       
       // 转换为 File 对象
       const response = await fetch(compressedDataUrl);
       const blob = await response.blob();
-      const file = new File([blob], `upload-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      // 检查文件大小，如果还太大（>200KB），再次压缩
+      let finalBlob = blob;
+      if (blob.size > 200 * 1024) {
+        console.log('文件仍较大，再次压缩...');
+        const aggressiveCompressed = await compressImage(dataUrl, 400, 0.4);
+        const aggressiveResponse = await fetch(aggressiveCompressed);
+        finalBlob = await aggressiveResponse.blob();
+        console.log('二次压缩后大小:', finalBlob.size);
+      }
+      
+      const file = new File([finalBlob], `upload-${Date.now()}.jpg`, { type: 'image/jpeg' });
       
       // 上传到 TOS
       const formData = new FormData();
