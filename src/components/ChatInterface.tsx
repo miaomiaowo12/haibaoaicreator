@@ -128,51 +128,29 @@ export default function ChatInterface() {
 
   const handleImageUpload = async (dataUrl: string) => {
     try {
-      const compressedDataUrl = await compressImage(dataUrl, 800, 0.7);
-      setBackgroundImage(compressedDataUrl);
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'background.jpg', { type: blob.type });
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const uploadData = await uploadResponse.json();
+      
+      if (uploadData.error) {
+        throw new Error(uploadData.error);
+      }
+      
+      console.log('图片已上传到 TOS:', uploadData.url);
+      setBackgroundImage(uploadData.url);
     } catch (err) {
-      console.error('图片压缩失败:', err);
-      setBackgroundImage(dataUrl);
-    }
-  };
-
-  const compressImage = (dataUrl: string, maxWidth: number = 512, quality: number = 0.4): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          // 使用JPEG格式，兼容性更好
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-          resolve(compressedDataUrl);
-        } else {
-          resolve(dataUrl);
-        }
-      };
-      img.src = dataUrl;
-    });
-  };
-
-  const handleCopyMessage = async (messageId: string, content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopiedMessageId(messageId);
-      setTimeout(() => setCopiedMessageId(null), 2000);
-    } catch (err) {
-      console.error('复制失败:', err);
+      console.error('图片上传失败:', err);
+      alert('图片上传失败，请重试');
     }
   };
 
@@ -180,29 +158,35 @@ export default function ChatInterface() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // 检查文件大小（限制为20MB）
-    const maxSize = 20 * 1024 * 1024; // 20MB
+    const maxSize = 20 * 1024 * 1024;
     if (file.size > maxSize) {
       alert('图片文件过大，请选择小于20MB的图片');
       e.target.value = '';
       return;
     }
     
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        try {
-          const compressedDataUrl = await compressImage(dataUrl, 600, 0.5);
-          console.log('压缩后大小:', compressedDataUrl.length, '字符');
-          setBackgroundImage(compressedDataUrl);
-        } catch (err) {
-          console.error('图片压缩失败:', err);
-          alert('图片处理失败，请尝试其他图片');
-        }
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const uploadData = await uploadResponse.json();
+      
+      if (uploadData.error) {
+        throw new Error(uploadData.error);
       }
-    };
-    reader.readAsDataURL(file);
+      
+      console.log('图片已上传到 TOS:', uploadData.url);
+      setBackgroundImage(uploadData.url);
+    } catch (err) {
+      console.error('图片上传失败:', err);
+      alert('图片上传失败，请重试');
+    }
+    
     e.target.value = '';
   };
 

@@ -98,27 +98,8 @@ export async function POST(request: NextRequest) {
     if (selectedImage) {
       requestBody.image = selectedImage;
     } else if (backgroundImage) {
-      let imageUrl = backgroundImage;
-      
-      if (backgroundImage.startsWith('data:image/')) {
-        const matches = backgroundImage.match(/^data:image\/(\w+);base64,(.+)$/);
-        if (matches) {
-          const format = matches[1].toLowerCase();
-          const base64Data = matches[2];
-          imageUrl = `data:image/${format};base64,${base64Data}`;
-          console.log('背景图格式:', format, 'Base64长度:', base64Data.length);
-          
-          if (base64Data.length > 544000) {
-            console.log('背景图太大，不发送图片，Base64长度:', base64Data.length);
-            requestBody.image = undefined;
-            enhancedPrompt = `用户上传了一张背景图作为参考（图片过大无法处理），${enhancedPrompt}`;
-          } else {
-            requestBody.image = imageUrl;
-          }
-        }
-      } else {
-        requestBody.image = imageUrl;
-      }
+      requestBody.image = backgroundImage;
+      console.log('使用 TOS 图片 URL:', backgroundImage);
     }
 
     console.log('请求参数:', JSON.stringify({
