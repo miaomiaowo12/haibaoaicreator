@@ -588,10 +588,13 @@ export default function ChatInterface() {
             {isLoading && (
               <div className="flex justify-start animate-fade-in">
                 <div className="message-assistant rounded-2xl px-4 py-3 shadow-message">
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                    <span className="text-gray-600 text-sm">海报生成中，请耐心等待...</span>
                   </div>
                 </div>
               </div>
