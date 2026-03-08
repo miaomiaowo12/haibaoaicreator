@@ -100,10 +100,10 @@ export function recommendColorScheme(posterType: string): string {
   const recommendations: Record<string, string> = {
     promotion: 'warm',
     recruitment: 'cool',
-    opening: 'chinese',
-    festival: 'chinese',
+    opening: 'warm',
+    festival: 'warm',
     event: 'complementary',
-    product: 'luxury',
+    product: 'monochrome',
     food: 'warm',
     travel: 'cool',
     wedding: 'analogous',
