@@ -11,18 +11,21 @@ interface MessageInputProps {
 
 export default function MessageInput({ onSend, disabled, placeholder, onImageUpload }: MessageInputProps) {
   const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
-    if (input.trim() && !disabled) {
+    if (input.trim() && !disabled && !isSending) {
+      setIsSending(true);
       onSend(input);
       setInput('');
+      setTimeout(() => setIsSending(false), 1000); // 1秒后允许再次发送
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !disabled && !isSending) {
       e.preventDefault();
       handleSend();
     }
@@ -54,7 +57,7 @@ export default function MessageInput({ onSend, disabled, placeholder, onImageUpl
     }
   }, [input]);
 
-  const canSend = input.trim() && !disabled;
+  const canSend = input.trim() && !disabled && !isSending;
 
   return (
     <div className="flex items-center gap-2 bg-gray-100 rounded-2xl px-4 py-3">
