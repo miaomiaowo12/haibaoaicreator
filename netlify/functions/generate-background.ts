@@ -4,7 +4,8 @@ import {
   getPosterTypeSkill,
   getStyleSkill,
   getGeneralSuffix,
-  getFestivalSkill
+  getFestivalSkill,
+  getSystemSkill
 } from '../../src/lib/promptEnhancer';
 
 interface ChatMessage {
@@ -51,41 +52,54 @@ export default async (req: Request, context: Context) => {
       return new Response(null, { status: 202 });
     }
 
-    // Build prompt: 海报类型 Skill + 风格 Skill + 通用后缀 + 用户输入 + 节日 Skill
-    const promptParts: string[] = [];
+    // ============================================================
+    // 指令生成公式：整合所有 7 个 Skills 要点
+    // ============================================================
     
-    // 1. 海报类型 Skill
+    // 1. System Skill - 设定AI角色和专业定位
+    let enhancedPrompt = `${getSystemSkill()}。`;
+    
+    // 2. Poster Type Skill - 海报类型定位
     const posterTypeSkill = getPosterTypeSkill(posterType);
     if (posterTypeSkill) {
-      promptParts.push(posterTypeSkill);
+      enhancedPrompt += `【海报类型】${posterTypeSkill}。`;
     } else {
-      promptParts.push('通用创意海报，画面美观协调，元素贴合主题，构图合理');
+      enhancedPrompt += `【海报类型】通用创意海报，画面美观协调，元素贴合主题，构图合理。`;
     }
     
-    // 2. 风格 Skill
+    // 3. Style Skill - 视觉风格定义
     const styleSkill = getStyleSkill(style);
     if (styleSkill) {
-      promptParts.push(styleSkill);
+      enhancedPrompt += `【视觉风格】${styleSkill}。`;
     }
     
-    // 3. 通用后缀
-    promptParts.push(getGeneralSuffix());
-    
-    // 4. 用户输入的要求内容提取
-    promptParts.push(`用户需求：${prompt}`);
-    
-    // 5. 节日 Skill（从用户输入中识别）
+    // 4. Festival Skill - 节日主题识别（从用户需求中提取）
     const festivalSkill = getFestivalSkill(prompt);
     if (festivalSkill) {
-      promptParts.push(festivalSkill);
+      enhancedPrompt += `【节日主题】${festivalSkill}。`;
     }
-
-    const hasImage = !!backgroundImage || !!selectedImage;
-    const size = hasImage ? '2048x2048' : '2K';
-
-    let enhancedPrompt = promptParts.join('，');
     
-    // 处理对话上下文
+    // 5. 用户核心需求提取
+    enhancedPrompt += `【用户需求】${prompt}。`;
+    
+    // 提取用户明确要求的文字内容（引号内的内容）
+    const textMatch = prompt.match(/[""「」『』【】]([^""「」『』【】]+)[""「」『』【】]/);
+    if (textMatch) {
+      enhancedPrompt += `【指定文字】海报中必须显示的文字："${textMatch[1]}"，严禁添加其他任何文字。`;
+    }
+    
+    // 6. General Suffix - 通用质量要求
+    enhancedPrompt += `【质量要求】${getGeneralSuffix()}。`;
+    
+    // 7. 严格规则 - 强制约束条件
+    enhancedPrompt += `【严格约束】`;
+    enhancedPrompt += `1.文字纯净：仅显示用户明确要求的内容，禁止出现任何用户未提及的文字、数字、日期、地址、人名、电话、邮箱；`;
+    enhancedPrompt += `2.禁止元素：不得出现平台名称（抖音、小红书、微信等）、设计说明类文字（海报设计、爆款、新品等）、水印签名、装饰性字母、无关符号；`;
+    enhancedPrompt += `3.文字标准：所有文字必须清晰可读，字体大小适中，标题醒目正文清晰，边缘锐利无模糊，印刷级清晰度，无锯齿无毛边，字体端正不倾斜不变形；`;
+    enhancedPrompt += `4.排版规范：文字对齐整齐，间距合理，层级分明，整体协调美观；`;
+    enhancedPrompt += `5.画面纯净：画面干净整洁，无多余装饰文字，无乱码，无模糊字符，无不可识别的符号。`;
+
+    // 处理对话上下文（如果有）
     let contextSummary = '';
     if (messages && messages.length > 1) {
       const recentMessages = messages.slice(-10);
@@ -95,26 +109,22 @@ export default async (req: Request, context: Context) => {
     }
     
     if (contextSummary) {
-      enhancedPrompt = `【对话上下文】${contextSummary}【当前需求】${enhancedPrompt}`;
+      enhancedPrompt = `【对话历史】${contextSummary}【当前任务】${enhancedPrompt}`;
     }
 
+    // 参考背景图（如果有）
     if (backgroundImage) {
-      enhancedPrompt = `参考用户上传的背景图风格和构图，${enhancedPrompt}`;
+      enhancedPrompt = `【参考图片】请参照用户上传的背景图风格和构图进行创作。${enhancedPrompt}`;
     }
-
-    // 提取用户明确要求的文字内容
-    const textMatch = prompt.match(/[""「」『』【】]([^""「」『』【】]+)[""「」『』【】]/);
-    if (textMatch) {
-      enhancedPrompt += `。用户明确要求的文字内容："${textMatch[1]}"，仅显示此文字，不添加其他任何文字`;
-    }
-
-    // 严格规则
-    enhancedPrompt += '。【严格规则】1.文字内容：海报中只能出现用户明确要求展示的文字内容，禁止添加任何用户未提及的文字；2.禁止出现：平台名称（抖音、小红书、微信等）、设计说明（海报设计、爆款、新品等）、随机数字、日期时间地点（除非用户提供）、水印签名、装饰性字母、无关符号；3.文字质量：所有文字必须清晰可读，字体大小适中（标题字号大、正文字号适中），边缘锐利无模糊，印刷级清晰度，无锯齿无毛边，字体端正不倾斜不变形；4.文字排版：文字对齐整齐，间距合理，层级分明，标题醒目，正文清晰，整体协调美观；5.纯净画面：画面干净整洁，无多余装饰文字，无乱码，无模糊字符，无不可识别的符号';
 
     console.log('[Background] 原始提示词:', prompt);
-    console.log('[Background] 增强后提示词:', enhancedPrompt.substring(0, 200) + '...');
+    console.log('[Background] 完整增强提示词:', enhancedPrompt.substring(0, 300) + '...');
+    console.log(`[Background] Job ${jobId}: Prompt length: ${enhancedPrompt.length}`);
 
-    // Build request body AFTER all prompt enhancements
+    // Build request body
+    const hasImage = !!backgroundImage || !!selectedImage;
+    const size = hasImage ? '2048x2048' : '2K';
+    
     const requestBody: Record<string, unknown> = {
       model: 'doubao-seedream-4-5-251128',
       prompt: enhancedPrompt,
@@ -129,7 +139,6 @@ export default async (req: Request, context: Context) => {
     }
 
     console.log(`[Background] Job ${jobId}: Calling Doubao API...`);
-    console.log(`[Background] Job ${jobId}: Prompt length: ${enhancedPrompt.length}`);
     
     // Call Doubao API with timeout
     const controller = new AbortController();
@@ -215,4 +224,3 @@ export default async (req: Request, context: Context) => {
 export const config: Config = {
   // No custom path needed - will be available at /.netlify/functions/generate-background
 };
-

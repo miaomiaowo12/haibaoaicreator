@@ -89,4 +89,8 @@ export function getGeneralSuffix(): string {
   return GENERAL_SUFFIX;
 }
 
+export function getSystemSkill(): string {
+  return SYSTEM_SKILL;
+}
+
 export { POSTER_TYPE_SKILLS, STYLE_SKILLS, FESTIVAL_KEYWORDS };
