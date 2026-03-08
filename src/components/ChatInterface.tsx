@@ -266,7 +266,7 @@ export default function ChatInterface() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 240000); // 240秒超时，适应手机慢网络
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 300秒超时（5分钟），适应Pro账户26秒限制但前端保持连接，适应手机慢网络
       
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -290,7 +290,10 @@ export default function ChatInterface() {
       
       clearTimeout(timeoutId);
 
+      console.log('前端收到响应:', response.status, response.statusText);
+
       if (!response.ok) {
+        console.error('响应错误:', response.status, response.statusText);
         throw new Error(`服务器错误: ${response.status}`);
       }
 
@@ -654,20 +657,20 @@ export default function ChatInterface() {
 
         <div className="input-area p-4 safe-area-bottom flex-shrink-0 shadow-input">
           {isUploadingImage && (
-            <div className="mb-3 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-              <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-              <span className="font-medium">图片上传中... 请等待显示"已上传背景图"后再发送</span>
+            <div className="mb-3 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              <span>图片上传完成后才可以输入内容</span>
             </div>
           )}
           
           {backgroundImage && !isUploadingImage && (
-            <div className="mb-3 flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+            <div className="mb-3 flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
               <img 
                 src={backgroundImage} 
                 alt="背景图预览" 
                 className="w-12 h-12 object-cover rounded border border-gray-200"
               />
-              <span className="text-sm text-green-700 font-medium">✓ 已上传背景图，可以开始生成</span>
+              <span className="text-sm text-gray-600">已上传完成，可以开始生成</span>
               <button
                 onClick={handleRemoveBackground}
                 className="text-red-500 hover:text-red-700 text-sm ml-auto"
