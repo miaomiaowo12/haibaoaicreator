@@ -318,13 +318,12 @@ export default function ChatInterface() {
         attempts++;
         
         // 更新进度显示
-        const elapsedSeconds = attempts * 3;
         if (attempts <= 5) {
-          setLoadingStatus(`正在启动生成任务... (${elapsedSeconds}秒)`);
+          setLoadingStatus('正在启动生成任务...');
         } else if (attempts <= 15) {
-          setLoadingStatus(`AI正在生成海报，请稍候... (${elapsedSeconds}秒)`);
+          setLoadingStatus('AI正在生成海报，请稍候...');
         } else {
-          setLoadingStatus(`正在优化海报细节... (${elapsedSeconds}秒)`);
+          setLoadingStatus('正在优化海报细节...');
         }
         
         console.log(`轮询第 ${attempts}/${maxAttempts} 次...`);
