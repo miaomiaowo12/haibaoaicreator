@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const job = getJob(jobId);
+    const job = await getJob(jobId);
 
     if (!job) {
       return NextResponse.json(
