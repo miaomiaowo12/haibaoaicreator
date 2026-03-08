@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!posterType && !finalColorScheme && !typography) {
-      enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象';
+      enhancedPrompt += '；生成一张高清精美、视觉协调、质感高级的通用创意海报，采用色彩鲜艳明亮、温暖亲切友好的风格，构图合理美观，色彩和谐舒适，元素适配主题，排版整齐清晰，细节丰富精致，氛围感充足，画质清晰细腻，视觉效果生动形象，传递积极正面的情感';
     }
 
     const textMatch = prompt.match(/[""「」『』【】]([^""「」『』【】]+)[""「」『』【】]/);
