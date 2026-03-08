@@ -171,25 +171,38 @@ export default function ChatInterface() {
     try {
       setIsUploadingImage(true);
       
-      // 先压缩图片（512px, 0.5质量，文件控制在150KB以内）
-      const compressedDataUrl = await compressImage(dataUrl, 512, 0.5);
+      // 第一次压缩：512px, 0.4质量
+      const compressedDataUrl = await compressImage(dataUrl, 512, 0.4);
       console.log('图片压缩完成，大小:', compressedDataUrl.length);
       
       // 转换为 File 对象
       const response = await fetch(compressedDataUrl);
-      const blob = await response.blob();
+      let blob = await response.blob();
       
-      // 检查文件大小，如果还太大（>200KB），再次压缩
-      let finalBlob = blob;
-      if (blob.size > 200 * 1024) {
-        console.log('文件仍较大，再次压缩...');
-        const aggressiveCompressed = await compressImage(dataUrl, 400, 0.4);
+      // 如果还太大（>80KB），再次压缩到 320px
+      if (blob.size > 80 * 1024) {
+        console.log('文件仍较大，再次压缩到 320px...');
+        const aggressiveCompressed = await compressImage(dataUrl, 320, 0.3);
         const aggressiveResponse = await fetch(aggressiveCompressed);
-        finalBlob = await aggressiveResponse.blob();
-        console.log('二次压缩后大小:', finalBlob.size);
+        blob = await aggressiveResponse.blob();
+        console.log('二次压缩后大小:', blob.size);
+        
+        // 如果还太大（>50KB），最后一次压缩到 256px
+        if (blob.size > 50 * 1024) {
+          console.log('文件还太大，最终压缩到 256px...');
+          const finalCompressed = await compressImage(dataUrl, 256, 0.3);
+          const finalResponse = await fetch(finalCompressed);
+          blob = await finalResponse.blob();
+          console.log('最终压缩后大小:', blob.size);
+        }
       }
       
-      const file = new File([finalBlob], `upload-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      // 警告用户如果图片还太大
+      if (blob.size > 100 * 1024) {
+        alert('图片文件较大，上传可能需要更长时间。建议上传更小的图片或等待结果时不要离开页面。');
+      }
+      
+      const file = new File([blob], `upload-${Date.now()}.jpg`, { type: 'image/jpeg' });
       
       // 上传到 TOS
       const formData = new FormData();
