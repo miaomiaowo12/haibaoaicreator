@@ -4,3 +4,10 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["node_modules/@volcengine/tos-sdk/**/*"]
+
+[functions.api]
+  timeout = 60
